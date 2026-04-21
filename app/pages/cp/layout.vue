@@ -148,7 +148,10 @@ import { useCpCopy } from '../../../composables/useCpCopy'
 import { useCpFormatters } from '../../../composables/useCpFormatters'
 import { cpNativePageCopy } from '../../constants/cp-native-copy'
 
-definePageMeta({ layout: 'cp' })
+definePageMeta({
+  layout: 'cp',
+  roles: ['admin', 'owner'],
+})
 
 const copy = useCpCopy(cpNativePageCopy.layout)
 useHead({ title: computed(() => `${copy.value.headTitle} · NEXORA CLOUD CP`) })

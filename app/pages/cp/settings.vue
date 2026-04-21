@@ -377,6 +377,7 @@ import { useCpFormatters } from '../../../composables/useCpFormatters'
 
 definePageMeta({
   layout: 'cp',
+  roles: ['admin', 'owner'],
 })
 
 const { formatDateTime } = useCpFormatters()

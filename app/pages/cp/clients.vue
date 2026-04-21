@@ -785,7 +785,6 @@ function onRowCommand(command: string, row: ClientRow) {
 function renderClientCell({ rowData }: { rowData: ClientRow }) {
   return h('div', { class: 'client-cell' }, [
     h('div', { class: 'client-headline' }, [
-      h('span', { class: 'client-dot' }),
       h('strong', rowData.login),
       rowData.account_id ? h('span', { class: 'client-chip' }, `${copy.value.table.account}: ${rowData.account_id}`) : null,
     ]),
@@ -968,9 +967,54 @@ onBeforeUnmount(() => {
 :deep(.table-btn-primary) { border-color: rgba(79, 140, 255, 0.28); background: linear-gradient(135deg, rgba(79, 140, 255, 0.16), rgba(79, 209, 197, 0.18)); }
 :deep(.icon-only) { width: 42px; min-width: 42px; padding: 0; display: inline-grid; place-items: center; }
 :deep(.checkbox-wrap) { display: grid; place-items: center; }
+:deep(.checkbox-wrap .el-checkbox) { margin: 0; display: inline-grid; place-items: center; }
+:deep(.checkbox-wrap .el-checkbox__label) { display: none; }
+:deep(.checkbox-wrap .el-checkbox__input) { display: inline-grid; place-items: center; }
+:deep(.checkbox-wrap .el-checkbox__inner) {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--brand-secondary) 34%, var(--stroke));
+  background: color-mix(in srgb, var(--surface-soft) 94%, var(--surface));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+:deep(.checkbox-wrap .el-checkbox__input:hover .el-checkbox__inner) {
+  border-color: color-mix(in srgb, var(--brand-secondary) 56%, var(--stroke));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 1px rgba(79, 209, 197, 0.12);
+}
+:deep(.checkbox-wrap .el-checkbox__input.is-focus .el-checkbox__inner) {
+  border-color: color-mix(in srgb, var(--brand-secondary) 58%, var(--stroke));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 2px rgba(79, 209, 197, 0.12);
+}
+:deep(.checkbox-wrap .el-checkbox__input.is-checked .el-checkbox__inner),
+:deep(.checkbox-wrap .el-checkbox__input.is-indeterminate .el-checkbox__inner) {
+  border-color: rgba(79, 209, 197, 0.6);
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.92), rgba(79, 209, 197, 0.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 0 1px rgba(79, 209, 197, 0.16);
+}
+:deep(.checkbox-wrap .el-checkbox__input.is-checked .el-checkbox__inner::after) {
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border-width: 2px;
+}
+:deep(.checkbox-wrap .el-checkbox__input.is-indeterminate .el-checkbox__inner::before) {
+  top: 7px;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  border-radius: 999px;
+}
 :deep(.client-cell) { display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 10px 0; }
 :deep(.client-headline) { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; line-height: 1.1; }
-:deep(.client-dot) { width: 10px; height: 10px; border-radius: 999px; background: var(--brand-secondary); box-shadow: 0 0 0 5px rgba(79, 140, 255, 0.16); }
 :deep(.client-chip) { padding: 4px 8px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--surface-soft); font-size: 11px; color: var(--text-muted); }
 :deep(.client-headline strong) { font-size: 15px; font-weight: 800; }
 :deep(.client-meta) { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11px; line-height: 1.35; color: var(--text-muted); }

@@ -20,9 +20,21 @@
           <button class="primary-btn" :disabled="loading" @click="refreshAll">
             {{ loading ? copy.refreshing : copy.refresh }}
           </button>
+          <button v-if="canManagePcs" class="primary-btn" :disabled="create.loading" @click="openCreate">
+            {{ copy.add }}
+          </button>
         </div>
       </template>
     </CpPageHero>
+
+    <AddPcModal
+      v-model="create.open"
+      :zones="zones"
+      :loading="create.loading"
+      :error="create.err"
+      :initial="{ zone_id: zones[0]?.id ?? null }"
+      @submit="createSaveFromModal"
+    />
 
     <div class="stats-grid">
       <CpStatCard :label="copy.total" :value="String(pcs.length)" :hint="`Online ${onlineCount} · Busy ${busyCount}`" tone="tone-blue" />
@@ -81,8 +93,10 @@
 
 <script setup lang="ts">
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { cpApi } from '@legacy/api/cp'
+import AddPcModal from '@legacy/components/cp/AddPcModal.vue'
+import { hasRole, useCpAuthStore } from '@legacy/stores/cpAuth'
 import { useCpFormatters } from '../../../composables/useCpFormatters'
 import { useCpCopy } from '../../../composables/useCpCopy'
 import { cpNativePageCopy } from '../../constants/cp-native-copy'
@@ -92,6 +106,7 @@ definePageMeta({
 })
 
 const copy = useCpCopy(cpNativePageCopy.pcs)
+const auth = useCpAuthStore()
 
 useHead({
   title: computed(() => `${copy.value.headTitle} · NEXORA CLOUD CP`),
@@ -109,8 +124,15 @@ const zones = ref<any[]>([])
 const search = ref('')
 const zone = ref('all')
 const status = ref('all')
+const create = reactive({
+  open: false,
+  loading: false,
+  err: '',
+})
 
 let refreshTimer: number | null = null
+
+const canManagePcs = computed(() => hasRole(auth.operator, ['admin', 'owner']))
 
 const statusOptions = computed(() => [
   { value: 'online', label: copy.value.statuses.online },
@@ -179,6 +201,46 @@ async function refreshAll() {
   }
 }
 
+async function openCreate() {
+  create.err = ''
+  if (!zones.value.length) {
+    await refreshAll()
+  }
+  create.open = true
+}
+
+async function createSaveFromModal(payload: { code?: string; zone_id?: string | number | null; ip_address?: string | null }) {
+  const code = String(payload?.code || '').trim()
+  const zoneId = Number(payload?.zone_id || 0)
+
+  create.err = ''
+  if (!code) {
+    create.err = copy.value.codeRequired
+    return
+  }
+  if (!zoneId) {
+    create.err = copy.value.zoneRequired
+    return
+  }
+
+  create.loading = true
+  try {
+    await cpApi.createPc({
+      code,
+      zone_id: zoneId,
+      ip_address: payload?.ip_address || null,
+      status: 'offline',
+    })
+    ElMessage.success(copy.value.created)
+    create.open = false
+    await refreshAll()
+  } catch (error: any) {
+    create.err = error?.response?.data?.message || copy.value.createError
+  } finally {
+    create.loading = false
+  }
+}
+
 async function sendCommand(pc: any, type: string) {
   try {
     await ElMessageBox.confirm(txt(copy.value.sendCommandConfirm, { pc: pc.code || pc.name, type }), copy.value.confirmTitle, {
@@ -206,7 +268,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .pcs-page { display:grid; gap:16px; }
-.hero-tools { display:grid; grid-template-columns:1.4fr 1fr 1fr 160px; gap:10px; width:min(100%, 980px); }
+.hero-tools { display:grid; grid-template-columns:minmax(220px,1.4fr) repeat(2,minmax(150px,1fr)) repeat(2,max-content); gap:10px; width:min(100%, 1120px); }
 .meta-chip,
 .search-input,
 .select-input,

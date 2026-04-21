@@ -286,6 +286,7 @@ import { useCpCopy } from '../../../composables/useCpCopy'
 
 definePageMeta({
   layout: 'cp',
+  roles: ['admin', 'owner'],
 })
 
 const messages = {

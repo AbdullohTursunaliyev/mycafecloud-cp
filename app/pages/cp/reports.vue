@@ -610,7 +610,10 @@ import { useCpFormatters } from '../../../composables/useCpFormatters'
 import { useCpCopy } from '../../../composables/useCpCopy'
 import { useCpTheme } from '../../../composables/useCpTheme'
 
-definePageMeta({ layout: 'cp' })
+definePageMeta({
+  layout: 'cp',
+  roles: ['admin', 'owner'],
+})
 
 useHead({ title: 'Reports · NEXORA CLOUD CP' })
 

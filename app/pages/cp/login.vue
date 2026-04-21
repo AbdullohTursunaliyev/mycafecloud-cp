@@ -67,10 +67,7 @@
           </label>
 
           <div class="remember-row">
-            <label class="remember-check">
-              <input v-model="rememberLastLogin" type="checkbox" />
-              <span>{{ copy.remember }}</span>
-            </label>
+            <span class="remember-note">{{ copy.remember }}</span>
             <button type="button" class="ghost-btn" @click="clearRemembered">
               {{ copy.clear }}
             </button>
@@ -166,7 +163,6 @@ const loading = ref(false)
 const error = ref('')
 const info = ref('')
 const showPassword = ref(false)
-const rememberLastLogin = ref(true)
 const rememberedLicense = ref('')
 const rememberedLogin = ref('')
 
@@ -249,13 +245,9 @@ async function submitLogin() {
       password: password.value,
     })
 
-    if (rememberLastLogin.value) {
-      localStorage.setItem(LAST_LICENSE_KEY, licenseKey.value)
-      localStorage.setItem(LAST_LOGIN_KEY, login.value.trim())
-      syncRememberedFromStorage()
-    } else {
-      clearRemembered()
-    }
+    localStorage.setItem(LAST_LICENSE_KEY, licenseKey.value)
+    localStorage.setItem(LAST_LOGIN_KEY, login.value.trim())
+    syncRememberedFromStorage()
 
     await navigateTo('/cp/dashboard')
   } catch (cause: any) {
@@ -272,8 +264,6 @@ onMounted(() => {
 
   if (savedLicense) licenseKeyInput.value = formatLicenseKey(savedLicense)
   if (savedLogin) login.value = savedLogin
-
-  rememberLastLogin.value = Boolean(savedLicense || savedLogin)
 })
 
 watch(
@@ -480,18 +470,9 @@ watch(
   flex-wrap: wrap;
 }
 
-.remember-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+.remember-note {
   font-size: 13px;
-  color: rgba(226, 232, 240, 0.86);
-}
-
-.remember-check input {
-  width: 16px;
-  height: 16px;
-  accent-color: #37e8ff;
+  color: rgba(226, 232, 240, 0.76);
 }
 
 .ghost-btn,

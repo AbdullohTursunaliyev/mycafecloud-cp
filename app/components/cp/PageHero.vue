@@ -1,10 +1,5 @@
 <template>
   <section class="page-hero">
-    <div class="hero-mark">
-      <span class="hero-orbit"></span>
-      <span class="hero-dot"></span>
-    </div>
-
     <div class="hero-copy">
       <h1>{{ title }}</h1>
       <div v-if="$slots.meta" class="hero-meta">
@@ -31,7 +26,7 @@ defineProps({
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 20px;
   align-items: end;
   padding: 26px;
@@ -50,36 +45,6 @@ defineProps({
   inset: auto 0 0 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--stroke-strong), transparent);
-}
-
-.hero-mark {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(79, 140, 255, 0.22), rgba(79, 209, 197, 0.18));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.hero-orbit,
-.hero-dot {
-  position: absolute;
-  border-radius: 999px;
-}
-
-.hero-orbit {
-  width: 26px;
-  height: 26px;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-}
-
-.hero-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--brand);
-  box-shadow: 0 0 0 6px rgba(79, 209, 197, 0.14);
 }
 
 .hero-copy {
