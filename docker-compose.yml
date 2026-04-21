@@ -1,0 +1,13 @@
+services:
+  cp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mycafecloud-cp
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      NUXT_CP_BACKEND_ORIGIN: ${NUXT_CP_BACKEND_ORIGIN:-http://host.docker.internal:8080}
+    ports:
+      - "${CP_PORT:-3000}:3000"
+    restart: unless-stopped

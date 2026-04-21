@@ -1,0 +1,14 @@
+.git
+.gitignore
+.idea
+.vscode
+node_modules
+.nuxt
+.output
+dist
+*.log
+.env
+.env.*
+!/.env.example
+investor-docs-uz
+*.rar
