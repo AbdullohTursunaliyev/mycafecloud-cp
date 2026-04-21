@@ -999,12 +999,16 @@ onBeforeUnmount(() => {
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 0 0 1px rgba(79, 209, 197, 0.16);
 }
+:deep(.checkbox-wrap .el-checkbox__inner::after) {
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 9px;
+  border-width: 0 2px 2px 0;
+  transform: translate(-42%, -58%) rotate(45deg) scaleY(0);
+}
 :deep(.checkbox-wrap .el-checkbox__input.is-checked .el-checkbox__inner::after) {
-  left: 5px;
-  top: 1px;
-  width: 5px;
-  height: 10px;
-  border-width: 2px;
+  transform: translate(-42%, -58%) rotate(45deg) scaleY(1);
 }
 :deep(.checkbox-wrap .el-checkbox__input.is-indeterminate .el-checkbox__inner::before) {
   top: 7px;

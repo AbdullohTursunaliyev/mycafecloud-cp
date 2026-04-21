@@ -27,7 +27,7 @@ const messages = {
         layout: 'Layout',
         clients: 'Mijozlar',
         bookings: 'Band qilish',
-        cashier: 'Kassir',
+        cashier: 'Smena',
         returns: 'Qaytarishlar',
         transfers: "O'tkazmalar",
         shiftsHistory: 'Smena tarixi',
@@ -381,7 +381,7 @@ const messages = {
         layout: 'Схема',
         clients: 'Клиенты',
         bookings: 'Бронирования',
-        cashier: 'Касса',
+        cashier: 'Смена',
         returns: 'Возвраты',
         transfers: 'Переводы',
         shiftsHistory: 'История смен',
@@ -735,7 +735,7 @@ const messages = {
         layout: 'Layout',
         clients: 'Clients',
         bookings: 'Bookings',
-        cashier: 'Cashier',
+        cashier: 'Shift',
         returns: 'Returns',
         transfers: 'Transfers',
         shiftsHistory: 'Shift History',
@@ -2877,4 +2877,3 @@ export const i18n = {
   supportedLocales: SUPPORTED,
   startDomTranslation,
 }
-

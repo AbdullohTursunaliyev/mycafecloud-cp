@@ -24,16 +24,7 @@
             <span>{{ copy.refresh }}</span>
           </button>
           <button
-            v-if="!isOpen"
-            class="toolbar-btn toolbar-btn-primary"
-            :disabled="loading || actionLoading"
-            @click="openModal = true"
-          >
-            <Icon name="lucide:play" size="15" />
-            <span>{{ copy.openShift }}</span>
-          </button>
-          <button
-            v-else
+            v-if="isOpen"
             class="toolbar-btn toolbar-btn-danger"
             :disabled="loading || actionLoading"
             @click="openCloseModal"
@@ -45,131 +36,136 @@
       </template>
     </CpPageHero>
 
-    <div class="shift-stats">
-      <CpStatCard compact tone="tone-blue" :label="copy.revenue" :value="money(grossIncome)" :hint="`${copy.cashIncome} ${money(cashIncome)} · Karta ${money(cardIncome)}`" />
-      <CpStatCard compact tone="tone-green" :label="copy.expectedCash" :value="money(expectedCashNow)" :hint="`${copy.opening} ${money(openingCash)} · ${copy.returns} ${money(returnsCashTotal)}`" />
-      <CpStatCard compact tone="tone-amber" :label="copy.expenses" :value="money(expensesTotal)" :hint="`${expenseRatio}% ${copy.share} · ${topExpenseCategory.name}`" />
-      <CpStatCard compact tone="tone-rose" :label="copy.discipline" :value="`${disciplineScore}%`" :hint="disciplineHint" />
-    </div>
-
     <p v-if="pageError" class="alert err">{{ pageError }}</p>
 
-    <div class="shift-grid">
-      <CpPanelCard :title="copy.cashflowTitle" :subtitle="copy.cashflowSubtitle">
-        <div v-if="isOpen" class="cash-card-stack">
-          <div v-for="row in cashRows" :key="row.key" class="cash-row" :class="row.tone">
-            <div class="cash-copy">
-              <span>{{ row.label }}</span>
-              <small>{{ row.note }}</small>
-            </div>
-            <strong>{{ row.value }}</strong>
-          </div>
+    <template v-if="isOpen">
+      <div class="shift-stats">
+        <CpStatCard compact tone="tone-blue" :label="copy.revenue" :value="money(grossIncome)" :hint="`${copy.cashIncome} ${money(cashIncome)} · Karta ${money(cardIncome)}`" />
+        <CpStatCard compact tone="tone-green" :label="copy.expectedCash" :value="money(expectedCashNow)" :hint="`${copy.opening} ${money(openingCash)} · ${copy.returns} ${money(returnsCashTotal)}`" />
+        <CpStatCard compact tone="tone-amber" :label="copy.expenses" :value="money(expensesTotal)" :hint="`${expenseRatio}% ${copy.share} · ${topExpenseCategory.name}`" />
+        <CpStatCard compact tone="tone-rose" :label="copy.discipline" :value="`${disciplineScore}%`" :hint="disciplineHint" />
+      </div>
 
-          <div v-if="handoverData?.carry" class="handover-card">
-            <div class="handover-head">
-              <Icon name="lucide:badge-info" size="15" />
-              <span>{{ copy.handover }}</span>
-            </div>
-            <p>{{ handoverLabel }}</p>
-          </div>
-        </div>
-
-        <div v-else class="closed-state">
-          <div class="closed-icon">
-            <Icon name="lucide:briefcase-business" size="18" />
-          </div>
-          <strong>{{ copy.closed }}</strong>
-          <ul class="closed-list">
-            <li v-for="hint in assistantHints" :key="hint">{{ hint }}</li>
-          </ul>
-          <button class="toolbar-btn toolbar-btn-primary" :disabled="loading || actionLoading" @click="openModal = true">
-            <Icon name="lucide:play" size="15" />
-            <span>{{ copy.openShift }}</span>
-          </button>
-        </div>
-      </CpPanelCard>
-
-      <CpPanelCard :title="copy.assistantTitle" :subtitle="copy.assistantSubtitle">
-        <div class="assistant-stack">
-          <div class="assistant-highlight" :class="disciplineToneClass">
-            <div>
-              <span>{{ copy.discipline }}</span>
-              <strong>{{ disciplineScore }}%</strong>
-            </div>
-            <small>{{ disciplineHint }}</small>
-          </div>
-
-          <ul class="hint-list">
-            <li v-for="hint in assistantHints" :key="hint">{{ hint }}</li>
-          </ul>
-
-          <div v-if="operatorLeaderboard.length" class="leaderboard">
-            <div class="leaderboard-head">
-              <span>{{ copy.operator }}</span>
-              <span>{{ copy.sales }}</span>
-              <span>{{ copy.expenses }}</span>
-              <span>{{ copy.net }}</span>
-            </div>
-            <div v-for="item in operatorLeaderboard.slice(0, 5)" :key="item.key" class="leaderboard-row">
-              <span>{{ item.name }}</span>
-              <span>{{ money(item.salesGross) }}</span>
-              <span>{{ money(item.expenses) }}</span>
-              <strong>{{ money(item.net) }}</strong>
-            </div>
-          </div>
-          <div v-else class="empty-state compact">{{ copy.noOperatorData }}</div>
-        </div>
-      </CpPanelCard>
-    </div>
-
-    <div class="shift-grid">
-      <CpPanelCard :title="copy.expensesTitle" :subtitle="copy.expensesSubtitle">
-        <template #actions>
-          <button class="toolbar-btn toolbar-btn-primary compact-btn" :disabled="!isOpen || actionLoading" @click="openExpenseModal">
-            <Icon name="lucide:plus" size="14" />
-            <span>{{ copy.addExpense }}</span>
-          </button>
-        </template>
-
-        <div v-if="expenses.length" class="feed-list">
-          <article v-for="item in expenses" :key="item.id" class="feed-item">
-            <div class="feed-icon expense">
-              <Icon name="lucide:receipt-text" size="15" />
-            </div>
-            <div class="feed-main">
-              <div class="feed-topline">
-                <strong>{{ item.title || '-' }}</strong>
-                <span>{{ money(item.amount) }}</span>
+      <div class="shift-grid">
+        <CpPanelCard :title="copy.cashflowTitle" :subtitle="copy.cashflowSubtitle">
+          <div class="cash-card-stack">
+            <div v-for="row in cashRows" :key="row.key" class="cash-row" :class="row.tone">
+              <div class="cash-copy">
+                <span>{{ row.label }}</span>
+                <small>{{ row.note }}</small>
               </div>
-              <small>{{ item.category || copy.other }} · {{ formatDateTime(item.spent_at || item.created_at) }}</small>
+              <strong>{{ row.value }}</strong>
             </div>
-            <button class="toolbar-btn compact-btn" :disabled="!isOpen || actionLoading" @click="removeExpense(item)">
-              <Icon name="lucide:trash-2" size="14" />
-              <span>{{ copy.remove }}</span>
+
+            <div v-if="handoverData?.carry" class="handover-card">
+              <div class="handover-head">
+                <Icon name="lucide:badge-info" size="15" />
+                <span>{{ copy.handover }}</span>
+              </div>
+              <p>{{ handoverLabel }}</p>
+            </div>
+          </div>
+        </CpPanelCard>
+
+        <CpPanelCard :title="copy.assistantTitle" :subtitle="copy.assistantSubtitle">
+          <div class="assistant-stack">
+            <div class="assistant-highlight" :class="disciplineToneClass">
+              <div>
+                <span>{{ copy.discipline }}</span>
+                <strong>{{ disciplineScore }}%</strong>
+              </div>
+              <small>{{ disciplineHint }}</small>
+            </div>
+
+            <ul class="hint-list">
+              <li v-for="hint in assistantHints" :key="hint">{{ hint }}</li>
+            </ul>
+
+            <div v-if="operatorLeaderboard.length" class="leaderboard">
+              <div class="leaderboard-head">
+                <span>{{ copy.operator }}</span>
+                <span>{{ copy.sales }}</span>
+                <span>{{ copy.expenses }}</span>
+                <span>{{ copy.net }}</span>
+              </div>
+              <div v-for="item in operatorLeaderboard.slice(0, 5)" :key="item.key" class="leaderboard-row">
+                <span>{{ item.name }}</span>
+                <span>{{ money(item.salesGross) }}</span>
+                <span>{{ money(item.expenses) }}</span>
+                <strong>{{ money(item.net) }}</strong>
+              </div>
+            </div>
+            <div v-else class="empty-state compact">{{ copy.noOperatorData }}</div>
+          </div>
+        </CpPanelCard>
+      </div>
+
+      <div class="shift-grid">
+        <CpPanelCard :title="copy.expensesTitle" :subtitle="copy.expensesSubtitle">
+          <template #actions>
+            <button class="toolbar-btn toolbar-btn-primary compact-btn" :disabled="!isOpen || actionLoading" @click="openExpenseModal">
+              <Icon name="lucide:plus" size="14" />
+              <span>{{ copy.addExpense }}</span>
             </button>
-          </article>
-        </div>
-        <div v-else class="empty-state">{{ copy.noExpenses }}</div>
-      </CpPanelCard>
+          </template>
 
-      <CpPanelCard :title="copy.returnsTitle" :subtitle="copy.returnsSubtitle">
-        <div v-if="returns.length" class="feed-list">
-          <article v-for="item in returns.slice(0, 8)" :key="item.id" class="feed-item">
-            <div class="feed-icon return">
-              <Icon name="lucide:rotate-ccw" size="15" />
-            </div>
-            <div class="feed-main">
-              <div class="feed-topline">
-                <strong>{{ item.client?.login || item.client?.phone || `#${item.client_id || '-'}` }}</strong>
-                <span>{{ money(item.amount) }}</span>
+          <div v-if="expenses.length" class="feed-list">
+            <article v-for="item in expenses" :key="item.id" class="feed-item">
+              <div class="feed-icon expense">
+                <Icon name="lucide:receipt-text" size="15" />
               </div>
-              <small>{{ item.payment_method || '-' }} · {{ formatDateTime(item.created_at) }}</small>
-            </div>
-          </article>
+              <div class="feed-main">
+                <div class="feed-topline">
+                  <strong>{{ item.title || '-' }}</strong>
+                  <span>{{ money(item.amount) }}</span>
+                </div>
+                <small>{{ item.category || copy.other }} · {{ formatDateTime(item.spent_at || item.created_at) }}</small>
+              </div>
+              <button class="toolbar-btn compact-btn" :disabled="!isOpen || actionLoading" @click="removeExpense(item)">
+                <Icon name="lucide:trash-2" size="14" />
+                <span>{{ copy.remove }}</span>
+              </button>
+            </article>
+          </div>
+          <div v-else class="empty-state">{{ copy.noExpenses }}</div>
+        </CpPanelCard>
+
+        <CpPanelCard :title="copy.returnsTitle" :subtitle="copy.returnsSubtitle">
+          <div v-if="returns.length" class="feed-list">
+            <article v-for="item in returns.slice(0, 8)" :key="item.id" class="feed-item">
+              <div class="feed-icon return">
+                <Icon name="lucide:rotate-ccw" size="15" />
+              </div>
+              <div class="feed-main">
+                <div class="feed-topline">
+                  <strong>{{ item.client?.login || item.client?.phone || `#${item.client_id || '-'}` }}</strong>
+                  <span>{{ money(item.amount) }}</span>
+                </div>
+                <small>{{ item.payment_method || '-' }} · {{ formatDateTime(item.created_at) }}</small>
+              </div>
+            </article>
+          </div>
+          <div v-else class="empty-state">{{ copy.noReturns }}</div>
+        </CpPanelCard>
+      </div>
+    </template>
+
+    <section v-else class="closed-stage">
+      <div class="closed-stage-card">
+        <div class="closed-stage-orb">
+          <div class="closed-stage-icon">
+            <Icon name="lucide:briefcase-business" size="30" />
+          </div>
         </div>
-        <div v-else class="empty-state">{{ copy.noReturns }}</div>
-      </CpPanelCard>
-    </div>
+        <span class="closed-stage-kicker">{{ copy.closed }}</span>
+        <h2>{{ copy.closedLead }}</h2>
+        <p>{{ copy.closedDescription }}</p>
+        <button class="toolbar-btn toolbar-btn-primary closed-stage-action" :disabled="loading || actionLoading" @click="openModal = true">
+          <Icon name="lucide:play" size="16" />
+          <span>{{ copy.openShift }}</span>
+        </button>
+      </div>
+    </section>
 
     <div v-if="openModal" class="overlay" @click.self="openModal = false">
       <div class="dialog">
@@ -730,6 +726,76 @@ onBeforeUnmount(() => {
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
 }
 
+.closed-stage {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 320px);
+  padding: 24px 0 8px;
+}
+
+.closed-stage-card {
+  width: min(560px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 36px 28px;
+  border-radius: 32px;
+  border: 1px solid color-mix(in srgb, var(--brand-secondary) 18%, var(--stroke));
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--brand-secondary) 16%, transparent), transparent 56%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 96%, transparent), color-mix(in srgb, var(--surface) 98%, transparent));
+  box-shadow: var(--shadow-panel);
+  text-align: center;
+}
+
+.closed-stage-orb {
+  display: grid;
+  place-items: center;
+  width: 110px;
+  height: 110px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(79, 209, 197, 0.16), rgba(79, 209, 197, 0.02) 68%, transparent 74%);
+}
+
+.closed-stage-icon {
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--brand-secondary) 28%, var(--stroke));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-secondary) 22%, var(--surface-soft)), color-mix(in srgb, var(--brand) 20%, var(--surface-soft)));
+  color: var(--brand-secondary);
+  box-shadow: 0 16px 36px rgba(8, 145, 178, 0.16);
+}
+
+.closed-stage-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-secondary);
+}
+
+.closed-stage-card h2 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.02;
+}
+
+.closed-stage-card p {
+  max-width: 420px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.closed-stage-action {
+  min-width: 190px;
+}
+
 .hero-toolbar {
   grid-template-columns: repeat(4, max-content);
   justify-content: end;
@@ -809,7 +875,6 @@ onBeforeUnmount(() => {
 .feed-item,
 .summary-box,
 .diff-box,
-.closed-state,
 .field-shell,
 .dialog,
 .check-item {
@@ -863,7 +928,6 @@ onBeforeUnmount(() => {
 }
 
 .handover-card,
-.closed-state,
 .assistant-highlight,
 .summary-box {
   padding: 16px;
@@ -886,32 +950,11 @@ onBeforeUnmount(() => {
   color: var(--text-muted);
 }
 
-.closed-state {
-  justify-items: start;
-  gap: 12px;
-}
-
-.closed-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--brand-secondary) 14%, var(--surface));
-  color: var(--brand-secondary);
-}
-
-.closed-state strong {
-  font-size: 16px;
-}
-
-.closed-list,
 .hint-list {
   margin: 0;
   padding-left: 18px;
 }
 
-.closed-list li,
 .hint-list li {
   font-size: 13px;
   line-height: 1.55;
@@ -1248,6 +1291,10 @@ onBeforeUnmount(() => {
     grid-template-columns: repeat(2, minmax(0, max-content));
     justify-content: start;
   }
+
+  .closed-stage {
+    min-height: calc(100vh - 280px);
+  }
 }
 
 @media (max-width: 720px) {
@@ -1276,6 +1323,27 @@ onBeforeUnmount(() => {
   .feed-item .toolbar-btn {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .closed-stage {
+    min-height: auto;
+    padding-top: 10px;
+  }
+
+  .closed-stage-card {
+    padding: 28px 18px;
+    border-radius: 26px;
+  }
+
+  .closed-stage-orb {
+    width: 92px;
+    height: 92px;
+  }
+
+  .closed-stage-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
   }
 }
 </style>
