@@ -561,7 +561,7 @@ const messages = {
 const copy = useCpCopy(messages)
 
 useHead({
-  title: computed(() => `${copy.value.title} - MyCafeCloud CP`),
+  title: computed(() => `${copy.value.title} - NEXORA CLOUD CP`),
 })
 
 const loading = reactive({ list: false, pcs: false, save: false, pcState: false })

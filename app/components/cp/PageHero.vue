@@ -6,9 +6,7 @@
     </div>
 
     <div class="hero-copy">
-      <p v-if="eyebrow" class="hero-eyebrow">{{ eyebrow }}</p>
       <h1>{{ title }}</h1>
-      <p v-if="subtitle" class="hero-subtitle">{{ subtitle }}</p>
       <div v-if="$slots.meta" class="hero-meta">
         <slot name="meta" />
       </div>
@@ -88,26 +86,10 @@ defineProps({
   min-width: 0;
 }
 
-.hero-eyebrow {
-  margin: 0;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--brand);
-}
-
 .page-hero h1 {
-  margin: 10px 0 0;
+  margin: 0;
   font-size: clamp(2rem, 2.3vw, 2.8rem);
   line-height: 0.98;
-}
-
-.hero-subtitle {
-  margin: 12px 0 0;
-  max-width: 760px;
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--text-muted);
 }
 
 .hero-meta {

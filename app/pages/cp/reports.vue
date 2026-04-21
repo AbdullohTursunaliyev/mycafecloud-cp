@@ -612,12 +612,12 @@ import { useCpTheme } from '../../../composables/useCpTheme'
 
 definePageMeta({ layout: 'cp' })
 
-useHead({ title: 'Reports · MyCafeCloud CP' })
+useHead({ title: 'Reports · NEXORA CLOUD CP' })
 
 const copy = useCpCopy({
   uz: {
     eyebrow: 'Owner analytics',
-    title: 'Hisobotlar markazi',
+    title: 'Hisobotlar',
     subtitle: "Tushum, operatsiya, AI tavsiyalari va exchange oqimini bitta owner workspace ichida ko'ring.",
     updated: 'Yangilanish',
     from: 'Boshlanish',
@@ -723,7 +723,7 @@ const copy = useCpCopy({
   },
   ru: {
     eyebrow: 'Owner analytics',
-    title: 'Центр отчетов',
+    title: 'Отчеты',
     subtitle: 'Смотрите выручку, операции, AI-рекомендации и exchange-поток в одном owner workspace.',
     updated: 'Обновлено',
     from: 'От',
@@ -829,7 +829,7 @@ const copy = useCpCopy({
   },
   en: {
     eyebrow: 'Owner analytics',
-    title: 'Reports center',
+    title: 'Reports',
     subtitle: 'See revenue, operations, AI recommendations, and exchange flow in one owner workspace.',
     updated: 'Updated',
     from: 'From',

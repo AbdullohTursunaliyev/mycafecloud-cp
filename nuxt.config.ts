@@ -17,7 +17,7 @@ export default defineNuxtConfig({
     cpBackendOrigin: process.env.NUXT_CP_BACKEND_ORIGIN || '',
     public: {
       apiBase: '/api',
-      appName: 'MyCafeCloud CP',
+      appName: 'NEXORA CLOUD',
     },
   },
   alias: {
@@ -25,12 +25,12 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'MyCafeCloud CP',
+      title: 'NEXORA CLOUD CP',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
           name: 'description',
-          content: 'Nuxt-based operator panel for MyCafeCloud computer club management.',
+          content: 'NEXORA CLOUD control panel for managing shifts, clients, bookings, and club PCs.',
         },
       ],
     },

@@ -352,7 +352,7 @@ const zonesPageCopy = {
 const copy = useCpCopy(zonesPageCopy)
 
 useHead({
-  title: computed(() => `${copy.value.headTitle} - MyCafeCloud CP`),
+  title: computed(() => `${copy.value.headTitle} - NEXORA CLOUD CP`),
 })
 
 const auth = useCpAuthStore()

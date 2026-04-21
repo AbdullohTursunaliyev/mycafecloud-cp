@@ -3,7 +3,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: 'Dashboard',
       eyebrow: 'Control overview',
-      title: "Tez, aniq va ishlatish oson boshqaruv markazi",
+      title: 'Dashboard',
       subtitle: "Smena, zal holati, bookinglar va muhim signal bir ekranda.",
       updatedAt: 'Oxirgi yangilanish',
       refresh: 'Yangilash',
@@ -55,7 +55,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Дашборд',
       eyebrow: 'Обзор управления',
-      title: 'Быстрый и понятный центр управления клубом',
+      title: 'Дашборд',
       subtitle: 'Смена, зал, брони и важные сигналы собраны на одном экране.',
       updatedAt: 'Последнее обновление',
       refresh: 'Обновить',
@@ -107,7 +107,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'Dashboard',
       eyebrow: 'Control overview',
-      title: 'Fast and clear club operations center',
+      title: 'Dashboard',
       subtitle: 'Shift, hall state, bookings, and important signals on one screen.',
       updatedAt: 'Last update',
       refresh: 'Refresh',
@@ -161,7 +161,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: 'Kompyuterlar',
       eyebrow: 'Hall control',
-      title: 'Kompyuterlar boshqaruvi soddalashtirildi',
+      title: 'Kompyuterlar',
       subtitle: "Filtrlash, status bo'yicha ko'rish va eng kerakli commandlar bitta joyda.",
       searchPlaceholder: "PC kodi yoki IP bo'yicha qidiring...",
       allZones: 'Barcha zonalar',
@@ -200,7 +200,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Компьютеры',
       eyebrow: 'Управление залом',
-      title: 'Управление компьютерами стало понятнее',
+      title: 'Компьютеры',
       subtitle: 'Фильтры, статусы и самые нужные команды собраны в одном месте.',
       searchPlaceholder: 'Ищите по коду ПК или IP...',
       allZones: 'Все зоны',
@@ -239,7 +239,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'PCs',
       eyebrow: 'Hall control',
-      title: 'PC management has been simplified',
+      title: 'PCs',
       subtitle: 'Filters, statuses, and the most useful commands in one place.',
       searchPlaceholder: 'Search by PC code or IP...',
       allZones: 'All zones',
@@ -280,7 +280,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: 'Layout',
       eyebrow: 'Operatsion xarita',
-      title: 'Schema zal endi tezroq va aniqroq ishlaydi',
+      title: 'Zal sxemasi',
       subtitle: "Joylashuv, status va aktiv sessiyalarni bitta interaktiv map orqali boshqaring.",
       updatedAt: 'Oxirgi yangilanish',
       refresh: 'Yangilash',
@@ -364,7 +364,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Схема',
       eyebrow: 'Операционная карта',
-      title: 'Схема зала теперь работает быстрее и понятнее',
+      title: 'Схема зала',
       subtitle: 'Управляйте расположением, статусами и активными сессиями через одну интерактивную карту.',
       updatedAt: 'Последнее обновление',
       refresh: 'Обновить',
@@ -448,7 +448,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'Layout',
       eyebrow: 'Operations map',
-      title: 'Hall layout is now faster and easier to operate',
+      title: 'Hall layout',
       subtitle: 'Manage placement, statuses, and active sessions through one interactive map.',
       updatedAt: 'Last update',
       refresh: 'Refresh',
@@ -534,7 +534,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: 'Bookinglar',
       eyebrow: 'Reservation flow',
-      title: 'Bookinglar boshqaruvi soddalashtirildi',
+      title: 'Bookinglar',
       subtitle: "Bron yaratish, navbatni ko'rish va kechikkan kelishlarni nazorat qilish bir sahifada.",
       updatedAt: 'Oxirgi yangilanish',
       total: 'Jami',
@@ -589,7 +589,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Брони',
       eyebrow: 'Поток бронирований',
-      title: 'Управление бронями стало понятнее',
+      title: 'Брони',
       subtitle: 'Создание, очередь и просроченные приходы контролируются на одной странице.',
       updatedAt: 'Последнее обновление',
       total: 'Всего',
@@ -644,7 +644,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'Bookings',
       eyebrow: 'Reservation flow',
-      title: 'Booking management has been simplified',
+      title: 'Bookings',
       subtitle: 'Create bookings, monitor the queue, and track late arrivals on one page.',
       updatedAt: 'Last update',
       total: 'Total',
@@ -701,7 +701,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: 'Qaytarishlar',
       eyebrow: 'Reversal control',
-      title: 'Qaytarish oqimini tez va aniq kuzating',
+      title: 'Qaytarishlar',
       subtitle: "Bugungi va oldingi return operatsiyalarni bitta yengil ro'yxatda ko'ring.",
       updatedAt: 'Yangilanish',
       refresh: 'Yangilash',
@@ -731,7 +731,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Возвраты',
       eyebrow: 'Reversal control',
-      title: 'Поток возвратов теперь видно быстрее',
+      title: 'Возвраты',
       subtitle: 'Текущие и прошлые возвраты собраны в одном легком списке.',
       updatedAt: 'Обновлено',
       refresh: 'Обновить',
@@ -761,7 +761,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'Returns',
       eyebrow: 'Reversal control',
-      title: 'Returns are easier to review now',
+      title: 'Returns',
       subtitle: 'Current and past return operations are listed in one lightweight view.',
       updatedAt: 'Updated',
       refresh: 'Refresh',
@@ -793,7 +793,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: "O'tkazmalar",
       eyebrow: 'Balance transfer',
-      title: "Balans o'tkazmalarini bir ekranda kuzating",
+      title: "O'tkazmalar",
       subtitle: "Klientlar orasidagi o'tkazmalarni tez ko'rish va tekshirish uchun yengil ro'yxat.",
       updatedAt: 'Yangilanish',
       refresh: 'Yangilash',
@@ -819,7 +819,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Переводы',
       eyebrow: 'Balance transfer',
-      title: 'Переводы между клиентами теперь видны быстрее',
+      title: 'Переводы',
       subtitle: 'Легкий список для проверки переводов между клиентами.',
       updatedAt: 'Обновлено',
       refresh: 'Обновить',
@@ -845,7 +845,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'Transfers',
       eyebrow: 'Balance transfer',
-      title: 'Balance transfers are easier to monitor now',
+      title: 'Transfers',
       subtitle: 'A lightweight list for quick review of client-to-client transfers.',
       updatedAt: 'Updated',
       refresh: 'Refresh',
@@ -873,7 +873,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: 'Sessiyalar',
       eyebrow: 'Live usage',
-      title: 'Aktiv sessiyalar tez nazorat qilinadi',
+      title: 'Sessiyalar',
       subtitle: "Qaysi PC bandligi, qaysi sessiya uzoq davom etayotgani va qayerda operator aralashuvi kerakligi birdan ko'rinadi.",
       updatedAt: 'Oxirgi yangilanish',
       zone: 'Zona',
@@ -916,7 +916,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Сессии',
       eyebrow: 'Живая загрузка',
-      title: 'Активные сессии теперь видны быстрее',
+      title: 'Сессии',
       subtitle: 'Сразу видно, какой ПК занят, какие сессии идут слишком долго и где нужен оператор.',
       updatedAt: 'Последнее обновление',
       zone: 'Зона',
@@ -959,7 +959,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'Sessions',
       eyebrow: 'Live usage',
-      title: 'Active sessions are easier to control',
+      title: 'Sessions',
       subtitle: 'See which PCs are busy, which sessions run too long, and where operator action is needed.',
       updatedAt: 'Last update',
       zone: 'Zone',
@@ -1004,7 +1004,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: 'Smena',
       eyebrow: 'Cash desk',
-      title: 'Smena nazorati aniq va tez',
+      title: 'Smena',
       subtitle: "Kassa oqimi, xarajatlar va yopishdagi farqni operator bir qarashda tushunadi.",
       closed: 'Shift yopiq',
       syncedAt: 'Sinxron',
@@ -1094,7 +1094,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Смена',
       eyebrow: 'Касса',
-      title: 'Контроль смены стал быстрее и понятнее',
+      title: 'Смена',
       subtitle: 'Оператор сразу видит денежный поток, расходы и разницу при закрытии смены.',
       closed: 'Смена закрыта',
       syncedAt: 'Синхронизировано',
@@ -1184,7 +1184,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'Shift',
       eyebrow: 'Cash desk',
-      title: 'Shift control is now faster and clearer',
+      title: 'Shift',
       subtitle: 'The operator can immediately see the cashflow, expenses, and close-out difference.',
       closed: 'Shift closed',
       syncedAt: 'Synced',
@@ -1276,7 +1276,7 @@ export const cpNativePageCopy = {
     uz: {
       headTitle: 'Hisobotlar',
       eyebrow: 'Owner analytics',
-      title: 'Hisobotlar endi qaror qabul qilishga xizmat qiladi',
+      title: 'Hisobotlar',
       subtitle: "Tushum, yuklama, autopilot tavsiyalari va exchange holatini ortiqcha shovqinsiz ko'rish mumkin.",
       updatedAt: 'Yangilanish',
       refresh: 'Yangilash',
@@ -1367,7 +1367,7 @@ export const cpNativePageCopy = {
     ru: {
       headTitle: 'Отчеты',
       eyebrow: 'Аналитика owner',
-      title: 'Отчеты теперь помогают быстрее принимать решения',
+      title: 'Отчеты',
       subtitle: 'Выручка, загрузка, рекомендации autopilot и состояние exchange показаны без лишнего шума.',
       updatedAt: 'Обновление',
       refresh: 'Обновить',
@@ -1458,7 +1458,7 @@ export const cpNativePageCopy = {
     en: {
       headTitle: 'Reports',
       eyebrow: 'Owner analytics',
-      title: 'Reports now support better decisions',
+      title: 'Reports',
       subtitle: 'Revenue, load, autopilot recommendations, and exchange state are presented without extra noise.',
       updatedAt: 'Updated',
       refresh: 'Refresh',

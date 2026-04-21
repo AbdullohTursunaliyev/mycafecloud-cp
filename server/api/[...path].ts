@@ -1,5 +1,7 @@
 import { getProxyRequestHeaders, getRequestURL, getRouterParam, proxyRequest } from 'h3'
 
+const DEFAULT_BACKEND_ORIGIN = 'http://localhost:8080'
+
 function normalizeBackendOrigin(value: string) {
   const trimmed = String(value || '').trim().replace(/\/+$/, '')
   if (!trimmed) return ''
@@ -8,14 +10,7 @@ function normalizeBackendOrigin(value: string) {
 
 export default defineEventHandler((event) => {
   const runtimeConfig = useRuntimeConfig(event)
-  const backendOrigin = normalizeBackendOrigin(runtimeConfig.cpBackendOrigin)
-
-  if (!backendOrigin) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Missing NUXT_CP_BACKEND_ORIGIN runtime config',
-    })
-  }
+  const backendOrigin = normalizeBackendOrigin(runtimeConfig.cpBackendOrigin || DEFAULT_BACKEND_ORIGIN)
 
   const path = getRouterParam(event, 'path') || ''
   const requestUrl = getRequestURL(event)

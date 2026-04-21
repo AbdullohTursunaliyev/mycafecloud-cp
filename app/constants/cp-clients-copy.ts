@@ -2,7 +2,7 @@ export const cpClientsPageCopy = {
   uz: {
     headTitle: 'Mijozlar',
     eyebrow: 'Client workspace',
-    title: 'Mijozlar bazasi tez va aniq boshqariladi',
+    title: 'Mijozlar',
     subtitle: "Server-side qidiruv, tezkor topup va barcha mijoz oqimlari bitta ish maydonida.",
     updatedAt: 'Yangilangan',
     searchPlaceholder: 'Login, account, telefon yoki ism boyicha qidiring...',
@@ -96,7 +96,7 @@ export const cpClientsPageCopy = {
   ru: {
     headTitle: 'Клиенты',
     eyebrow: 'Client workspace',
-    title: 'База клиентов управляется быстрее и понятнее',
+    title: 'Клиенты',
     subtitle: 'Server-side поиск, быстрый топап и все клиентские потоки в одном рабочем месте.',
     updatedAt: 'Обновлено',
     searchPlaceholder: 'Поиск по логину, account, телефону или имени...',
@@ -190,7 +190,7 @@ export const cpClientsPageCopy = {
   en: {
     headTitle: 'Clients',
     eyebrow: 'Client workspace',
-    title: 'Client data is faster and easier to operate',
+    title: 'Clients',
     subtitle: 'Server-side search, quick topup, and all client flows in one workspace.',
     updatedAt: 'Updated',
     searchPlaceholder: 'Search by login, account, phone, or name...',

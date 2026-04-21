@@ -151,7 +151,7 @@ import { cpNativePageCopy } from '../../constants/cp-native-copy'
 definePageMeta({ layout: 'cp' })
 
 const copy = useCpCopy(cpNativePageCopy.layout)
-useHead({ title: computed(() => `${copy.value.headTitle} · MyCafeCloud CP`) })
+useHead({ title: computed(() => `${copy.value.headTitle} · NEXORA CLOUD CP`) })
 
 const { formatMoney, formatDateTime } = useCpFormatters()
 const gridRef = ref<HTMLElement | null>(null)

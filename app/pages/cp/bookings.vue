@@ -298,7 +298,7 @@ type ClientOption = {
 const copy = useCpCopy(cpNativePageCopy.bookings)
 
 useHead({
-  title: computed(() => `${copy.value.headTitle} | MyCafeCloud CP`),
+  title: computed(() => `${copy.value.headTitle} | NEXORA CLOUD CP`),
 })
 
 const { formatDateTime, formatMoney, localeCode } = useCpFormatters()

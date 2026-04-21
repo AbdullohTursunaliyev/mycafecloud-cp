@@ -208,7 +208,7 @@
           <div class="form-grid">
             <label class="field field-span-2">
               <span>Shell EXE path</span>
-              <input v-model.trim="form.shellAutostartPath" placeholder="C:\Program Files\MyCafeCloud\MyCafeCloud.exe" />
+              <input v-model.trim="form.shellAutostartPath" placeholder="C:\Program Files\NexoraCloud\NexoraCloud.exe" />
             </label>
             <label class="field">
               <span>Shell args</span>
@@ -233,7 +233,7 @@
           <div class="form-grid">
             <label class="field field-span-2">
               <span>Shell EXE path</span>
-              <input v-model.trim="form.shellReplacePath" placeholder="C:\Program Files\MyCafeCloud\MyCafeCloud.exe" />
+              <input v-model.trim="form.shellReplacePath" placeholder="C:\Program Files\NexoraCloud\NexoraCloud.exe" />
             </label>
             <label class="field field-span-2">
               <span>Shell args</span>

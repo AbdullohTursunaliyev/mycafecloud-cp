@@ -2,20 +2,12 @@
   <div class="cp-shell">
     <aside class="cp-side">
       <div class="cp-brand">
-        <div class="logo" :class="{ 'has-image': !!safeClubLogo }">
-          <img v-if="safeClubLogo" :src="safeClubLogo" alt="Club logo" />
-          <span v-else>{{ logoInitials }}</span>
-        </div>
-
-        <div class="brand-copy">
-          <div class="brand-title">{{ clubDisplayName }}</div>
-          <div class="brand-sub">{{ tenantName }} · {{ operatorLabel }}</div>
-        </div>
-      </div>
-
-      <div class="license-chip">
-        <span>{{ copy.licenseLabel }}</span>
-        <strong>{{ licenseLabel }}</strong>
+        <img
+          :src="brandWordmark"
+          alt="NEXORA CLOUD logo"
+          class="brand-wordmark"
+          :class="{ 'is-light-mode': !isDark }"
+        />
       </div>
 
       <nav class="cp-nav">
@@ -60,6 +52,20 @@
             </button>
           </div>
 
+          <div class="operator-card">
+            <div class="operator-avatar">{{ operatorInitials }}</div>
+
+            <div class="operator-copy">
+              <strong>{{ operatorName }}</strong>
+              <span>{{ operatorRoleText }}</span>
+            </div>
+
+            <div class="operator-license" :class="licenseToneClass">
+              <small>{{ copy.licenseLabel }}</small>
+              <strong>{{ licenseLabel }}</strong>
+            </div>
+          </div>
+
           <button class="btn-logout" @click="logout">
             <Icon name="solar:logout-3-linear" class="action-icon" />
             <span>{{ t('layout.header.logout') }}</span>
@@ -85,6 +91,7 @@ import { cpLayoutCopy } from '../constants/cp-copy'
 import { useCpCopy } from '../../composables/useCpCopy'
 import { useCpTheme } from '../../composables/useCpTheme'
 
+const brandWordmark = '/brand/nexora-cloud-logo.png'
 const auth = useCpAuthStore()
 const route = useRoute()
 const { t, locale, setLocale, supportedLocales } = useI18n()
@@ -183,32 +190,46 @@ const flattenedItems = computed(() => visibleGroups.value.flatMap((group) => gro
 const currentPage = computed(() => flattenedItems.value.find((item) => route.path === item.to))
 const currentPageLabel = computed(() => (currentPage.value ? t(currentPage.value.labelKey) : t('layout.header.title')))
 
-const tenantName = computed(() => auth.tenant?.name || '-')
-const clubDisplayName = computed(() => clubName.value || tenantName.value || 'MyCafeCloud')
-const safeClubLogo = computed(() => normalizeLogoSrc(clubLogo.value))
-const logoInitials = computed(() => {
-  const src = String(clubDisplayName.value || 'MC').trim()
-  if (!src) return 'MC'
-  const chars = src
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word[0] || '')
-  return chars.join('').toUpperCase() || 'MC'
+const operatorName = computed(() => auth.operator?.login || 'Operator')
+const operatorRoleText = computed(() => {
+  const raw = String(auth.operator?.role || '').trim()
+  if (!raw) return 'Control access'
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
 })
-const operatorLabel = computed(() => (auth.operator ? `${auth.operator.login} (${auth.operator.role})` : '-'))
+const operatorInitials = computed(() => {
+  const src = String(operatorName.value || 'OP').trim()
+  if (!src) return 'OP'
+  return src
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0] || '')
+    .join('')
+    .toUpperCase() || 'OP'
+})
 
-const licenseLabel = computed(() => {
+const licenseDays = computed(() => {
   const exp = auth.tenant?.license_expires_at
-  if (!exp) return t('layout.license.unknown')
+  if (!exp) return null
 
   const d = new Date(exp)
-  if (Number.isNaN(d.getTime())) return t('layout.license.unknown')
+  if (Number.isNaN(d.getTime())) return null
+  return Math.ceil((d.getTime() - Date.now()) / 86400000)
+})
 
-  const diffMs = d.getTime() - Date.now()
-  const days = Math.ceil(diffMs / 86400000)
+const licenseLabel = computed(() => {
+  const days = licenseDays.value
+  if (days == null) return t('layout.license.unknown')
   if (days <= 0) return t('layout.license.expired')
-
   return t('layout.license.daysLeft', { days })
+})
+
+const licenseToneClass = computed(() => {
+  const days = licenseDays.value
+  if (days == null) return 'is-neutral'
+  if (days <= 0) return 'is-danger'
+  if (days <= 7) return 'is-warn'
+  return 'is-safe'
 })
 
 function isActive(path) {
@@ -283,62 +304,28 @@ onBeforeUnmount(() => {
 }
 
 .cp-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 0 2px;
-}
-
-.logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  font-weight: 900;
-  color: white;
-  background: linear-gradient(135deg, var(--brand-secondary), var(--brand));
-  box-shadow: 0 16px 32px rgba(79, 140, 255, 0.24);
-}
-
-.logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.brand-title {
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.brand-sub {
-  margin-top: 2px;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--text-muted);
-}
-
-.license-chip {
   display: grid;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--stroke);
-  background: var(--surface-soft);
+  gap: 0;
+  padding: 2px 0 6px;
 }
 
-.license-chip span {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--text-faint);
+.brand-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-left: 0;
+  filter: drop-shadow(0 0 22px rgba(55, 232, 255, 0.18));
 }
 
-.license-chip strong {
-  font-size: 13px;
+.brand-wordmark.is-light-mode {
+  filter:
+    invert(1)
+    hue-rotate(180deg)
+    saturate(1.85)
+    brightness(0.62)
+    contrast(1.14);
+  mix-blend-mode: multiply;
+  opacity: 0.94;
 }
 
 .cp-nav {
@@ -380,8 +367,8 @@ onBeforeUnmount(() => {
 }
 
 .cp-link.active {
-  background: linear-gradient(135deg, rgba(79, 140, 255, 0.16), rgba(79, 209, 197, 0.12));
-  border-color: rgba(79, 140, 255, 0.24);
+  background: linear-gradient(135deg, rgba(55, 232, 255, 0.16), rgba(142, 247, 255, 0.08));
+  border-color: rgba(55, 232, 255, 0.24);
 }
 
 .link-icon-wrap {
@@ -422,11 +409,11 @@ onBeforeUnmount(() => {
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
-  width: max-content;
+  width: 100%;
   max-width: 100%;
   padding: 8px 10px;
   border-radius: 18px;
-  justify-self: end;
+  justify-self: stretch;
   background: linear-gradient(180deg, var(--surface), var(--surface-soft));
   box-shadow: var(--shadow-soft);
 }
@@ -435,14 +422,15 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  width: auto;
+  width: 100%;
   gap: 8px;
+  align-items: stretch;
 }
 
 .theme-btn,
 .btn-logout,
 .lang-btn {
-  height: 38px;
+  height: 48px;
   padding: 0 13px;
   border-radius: 12px;
   border: 1px solid var(--stroke);
@@ -460,7 +448,7 @@ onBeforeUnmount(() => {
 }
 
 .theme-btn {
-  background: linear-gradient(135deg, rgba(79, 140, 255, 0.14), rgba(79, 209, 197, 0.12));
+  background: linear-gradient(135deg, rgba(55, 232, 255, 0.12), rgba(142, 247, 255, 0.08));
 }
 
 .btn-logout {
@@ -471,7 +459,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   gap: 8px;
   align-items: center;
-  height: 38px;
+  height: 48px;
   padding: 0 4px;
   border-radius: 12px;
   border: 1px solid var(--stroke);
@@ -483,13 +471,100 @@ onBeforeUnmount(() => {
   padding: 0 10px;
   font-size: 11px;
   font-weight: 800;
-  height: 30px;
+  height: 38px;
 }
 
 .lang-btn.active {
-  border-color: rgba(79, 209, 197, 0.28);
-  background: linear-gradient(135deg, rgba(79, 140, 255, 0.2), rgba(79, 209, 197, 0.16));
+  border-color: rgba(55, 232, 255, 0.28);
+  background: linear-gradient(135deg, rgba(55, 232, 255, 0.16), rgba(142, 247, 255, 0.14));
   color: var(--brand);
+}
+
+.operator-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(55, 232, 255, 0.08), transparent 50%),
+    var(--surface-soft);
+}
+
+.operator-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #041018;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(55, 232, 255, 0.84));
+  box-shadow: 0 12px 28px rgba(55, 232, 255, 0.14);
+}
+
+.operator-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  align-content: center;
+}
+
+.operator-copy strong {
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+.operator-copy span {
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.operator-license {
+  display: grid;
+  gap: 1px;
+  min-width: 98px;
+  padding: 6px 10px;
+  min-height: 38px;
+  align-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.operator-license small {
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.operator-license strong {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.operator-license.is-safe {
+  border-color: rgba(52, 211, 153, 0.22);
+  background: rgba(52, 211, 153, 0.08);
+}
+
+.operator-license.is-warn {
+  border-color: rgba(245, 158, 11, 0.26);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.operator-license.is-danger {
+  border-color: rgba(251, 113, 133, 0.24);
+  background: rgba(251, 113, 133, 0.1);
 }
 
 .action-icon {
@@ -519,6 +594,10 @@ onBeforeUnmount(() => {
     justify-content: flex-start;
     width: 100%;
   }
+
+  .operator-card {
+    flex: 1 1 260px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -539,6 +618,15 @@ onBeforeUnmount(() => {
     width: 36px;
     height: 36px;
     border-radius: 12px;
+  }
+
+  .operator-card {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .operator-copy {
+    flex: 1 1 auto;
   }
 }
 </style>

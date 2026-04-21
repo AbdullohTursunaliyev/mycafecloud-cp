@@ -5,44 +5,8 @@
     <div class="grid-noise" />
 
     <section class="login-shell">
-      <aside class="story-panel">
-        <div class="story-top">
-          <div class="brand-badge">{{ brandInitials }}</div>
-          <div>
-            <p class="eyebrow">{{ copy.kicker }}</p>
-            <h1>{{ appName }}</h1>
-            <p class="lead">{{ copy.lead }}</p>
-          </div>
-        </div>
-
-        <div class="trust-grid">
-          <article v-for="item in trustCards" :key="item.title" class="trust-card">
-            <span>{{ item.label }}</span>
-            <strong>{{ item.title }}</strong>
-            <p>{{ item.body }}</p>
-          </article>
-        </div>
-
-        <div class="status-strip">
-          <div class="status-pill">
-            <span class="status-dot" />
-            <strong>{{ copy.status }}</strong>
-          </div>
-          <div class="status-copy">
-            <span>{{ copy.lastLogin }}</span>
-            <strong>{{ rememberedLoginLabel }}</strong>
-          </div>
-        </div>
-      </aside>
-
       <main class="auth-card">
-        <div class="auth-head">
-          <div>
-            <p class="eyebrow">{{ copy.signInKicker }}</p>
-            <h2>{{ t('login.signIn') }}</h2>
-            <p class="auth-sub">{{ copy.authSub }}</p>
-          </div>
-
+        <div class="auth-top">
           <div class="lang-switch">
             <button
               v-for="code in supportedLocales"
@@ -54,6 +18,10 @@
               {{ t(`layout.lang.${code}`) }}
             </button>
           </div>
+        </div>
+
+        <div class="auth-brand">
+          <img :src="brandWordmark" alt="NEXORA CLOUD logo" class="brand-wordmark" />
         </div>
 
         <form class="auth-form" @submit.prevent="submitLogin">
@@ -112,14 +80,9 @@
           <div v-else-if="info" class="feedback info">{{ info }}</div>
 
           <button class="submit-btn" :disabled="loading || !canSubmit" type="submit">
-            <span>{{ loading ? copy.checking : t('login.signIn') }}</span>
+            <span>{{ loading ? copy.checking : copy.submit }}</span>
           </button>
         </form>
-
-        <footer class="auth-foot">
-          <span>{{ appName }}</span>
-          <strong>{{ currentYear }}</strong>
-        </footer>
       </main>
     </section>
   </div>
@@ -141,147 +104,59 @@ const LAST_LOGIN_KEY = 'cp_last_login'
 const auth = useCpAuthStore()
 const { t, locale, setLocale, supportedLocales } = useI18n()
 const runtimeConfig = useRuntimeConfig()
+const brandWordmark = '/brand/nexora-cloud-logo.png'
 
-const appName = computed(() => String(runtimeConfig.public.appName || 'Control Panel'))
-const brandInitials = computed(() => {
-  const parts = appName.value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((item) => item[0]?.toUpperCase() || '')
-  return parts.join('') || 'CP'
-})
+const appName = computed(() => String(runtimeConfig.public.appName || 'NEXORA CLOUD'))
 
 const copy = computed(() => {
   if (locale.value === 'ru') {
     return {
-      kicker: 'Operator access',
-      lead: 'Быстрый вход в панель управления сменой, клиентами, бронированиями и компьютерами.',
-      signInKicker: 'Secure sign-in',
-      authSub: 'Введите лицензию клуба и данные оператора для входа в систему.',
-      status: 'Online',
-      lastLogin: 'Последний вход',
       loginHelp: 'Введите логин оператора или имя аккаунта.',
       passwordHelp: 'Пароль должен принадлежать аккаунту оператора.',
       remember: 'Запомнить лицензию и логин',
       clear: 'Очистить',
+      submit: 'Войти',
       checking: 'Проверка...',
       showPassword: 'Show',
       hidePassword: 'Hide',
-      emptyRemembered: 'Новый вход',
       licenseHelp: 'Введите лицензионный ключ клуба.',
       licenseIncomplete: 'Ключ заполнен не полностью.',
       licenseReady: 'Формат ключа выглядит корректно.',
       cleared: 'Сохраненные данные входа очищены.',
-      defaultInfo: 'Введите лицензионный ключ, логин и пароль.',
     }
   }
 
   if (locale.value === 'en') {
     return {
-      kicker: 'Operator access',
-      lead: 'Fast access point for shifts, clients, bookings, and PC operations.',
-      signInKicker: 'Secure sign-in',
-      authSub: 'Use the club license key and operator credentials to enter the control panel.',
-      status: 'Online',
-      lastLogin: 'Last sign-in',
       loginHelp: 'Enter the operator login or account name.',
       passwordHelp: 'The password must belong to the operator account.',
       remember: 'Remember last license and login',
       clear: 'Clear',
+      submit: 'Login',
       checking: 'Checking...',
       showPassword: 'Show',
       hidePassword: 'Hide',
-      emptyRemembered: 'New sign-in',
       licenseHelp: 'Enter the club license key.',
       licenseIncomplete: 'The key is not complete yet.',
       licenseReady: 'The license format looks ready.',
       cleared: 'Saved sign-in data has been cleared.',
-      defaultInfo: 'Enter license key, login, and password.',
     }
   }
 
   return {
-    kicker: 'Operator access',
-    lead: "Klubning smena, mijoz, booking va PC boshqaruvi uchun tezkor kirish nuqtasi.",
-    signInKicker: 'Secure sign-in',
-    authSub: "Tizimga kirish uchun klub litsenziyasi va operator ma'lumotlarini kiriting.",
-    status: 'Online',
-    lastLogin: 'Oxirgi login',
     loginHelp: "Operator login yoki account nomini kiriting.",
     passwordHelp: "Parol operator akkauntiga tegishli bo'lishi kerak.",
     remember: 'Oxirgi license va loginni eslab qol',
     clear: 'Tozalash',
+    submit: 'Kirish',
     checking: 'Tekshirilmoqda...',
     showPassword: 'Show',
     hidePassword: 'Hide',
-    emptyRemembered: 'Yangi kirish',
     licenseHelp: 'Klubga tegishli license kalitini kiriting.',
     licenseIncomplete: "Kalit hali to'liq emas.",
     licenseReady: "Kalit format bo'yicha tayyor.",
     cleared: "Saqlangan kirish ma'lumotlari tozalandi.",
-    defaultInfo: "Litsenziya kaliti, login va parolni kiriting.",
   }
-})
-
-const trustCards = computed(() => {
-  if (locale.value === 'ru') {
-    return [
-      {
-        label: 'Shift ready',
-        title: 'Касса, сессии, возвраты',
-        body: 'Ключевые действия оператора собраны в одном рабочем потоке.',
-      },
-      {
-        label: 'Fast control',
-        title: 'PC и client ops',
-        body: 'Загрузка зала, пополнение, бронирования и сигналы доступны из одной панели.',
-      },
-      {
-        label: 'Secure access',
-        title: 'Лицензия и оператор',
-        body: 'Каждый вход проходит проверку лицензии клуба и аккаунта оператора.',
-      },
-    ]
-  }
-
-  if (locale.value === 'en') {
-    return [
-      {
-        label: 'Shift ready',
-        title: 'Cash, sessions, returns',
-        body: 'Core operator tasks stay in one clear workflow.',
-      },
-      {
-        label: 'Fast control',
-        title: 'PC and client ops',
-        body: 'Occupancy, top-up, bookings, and alerts stay inside one panel.',
-      },
-      {
-        label: 'Secure access',
-        title: 'License and operator auth',
-        body: 'Every sign-in is checked against the club license and operator account.',
-      },
-    ]
-  }
-
-  return [
-    {
-      label: 'Shift ready',
-      title: 'Kassa, sessiya, qaytarishlar',
-      body: "Operatorga kerak bo'lgan asosiy ishlar bitta oqimda yuradi.",
-    },
-    {
-      label: 'Fast control',
-      title: 'PC va client ops',
-      body: 'Bandlik, topup, booking va signal bir panel ichida boshqariladi.',
-    },
-    {
-      label: 'Secure access',
-      title: 'License va operator auth',
-      body: 'Har bir kirish klub litsenziyasi va operator akkaunti bilan tekshiriladi.',
-    },
-  ]
 })
 
 const licenseKeyInput = ref('')
@@ -289,26 +164,16 @@ const login = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
-const info = ref(copy.value.defaultInfo)
+const info = ref('')
 const showPassword = ref(false)
 const rememberLastLogin = ref(true)
 const rememberedLicense = ref('')
 const rememberedLogin = ref('')
 
 const licenseKey = computed(() => formatLicenseKey(licenseKeyInput.value))
-const currentYear = new Date().getFullYear()
 
 const canSubmit = computed(() => {
   return licenseKey.value.replace(/-/g, '').length >= 8 && login.value.trim().length >= 2 && password.value.length >= 1
-})
-
-const rememberedLoginLabel = computed(() => {
-  const savedLicense = rememberedLicense.value
-  const savedLogin = rememberedLogin.value
-  if (!savedLicense && !savedLogin) return copy.value.emptyRemembered
-  if (!savedLicense) return savedLogin
-  if (!savedLogin) return savedLicense
-  return `${savedLicense} | ${savedLogin}`
 })
 
 const licenseHint = computed(() => {
@@ -409,14 +274,13 @@ onMounted(() => {
   if (savedLogin) login.value = savedLogin
 
   rememberLastLogin.value = Boolean(savedLicense || savedLogin)
-  info.value = copy.value.defaultInfo
 })
 
 watch(
   () => locale.value,
   () => {
     if (!error.value) {
-      info.value = copy.value.defaultInfo
+      info.value = ''
     }
   },
 )
@@ -429,9 +293,9 @@ watch(
   overflow: hidden;
   color: #f8fafc;
   background:
-    radial-gradient(900px 480px at 10% 12%, rgba(37, 99, 235, 0.32), transparent 60%),
-    radial-gradient(960px 520px at 88% 84%, rgba(22, 163, 74, 0.22), transparent 60%),
-    linear-gradient(135deg, #030713 0%, #07152c 45%, #020611 100%);
+    radial-gradient(880px 480px at 12% 18%, rgba(55, 232, 255, 0.28), transparent 58%),
+    radial-gradient(860px 520px at 88% 80%, rgba(255, 255, 255, 0.12), transparent 60%),
+    linear-gradient(135deg, #010304 0%, #04101a 46%, #010203 100%);
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
 }
 
@@ -448,7 +312,7 @@ watch(
   left: -120px;
   width: 420px;
   height: 420px;
-  background: rgba(59, 130, 246, 0.42);
+  background: rgba(55, 232, 255, 0.36);
 }
 
 .ambient-right {
@@ -456,7 +320,7 @@ watch(
   bottom: -180px;
   width: 460px;
   height: 460px;
-  background: rgba(16, 185, 129, 0.28);
+  background: rgba(192, 252, 255, 0.16);
 }
 
 .grid-noise {
@@ -474,182 +338,50 @@ watch(
   position: relative;
   z-index: 1;
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(320px, 1.1fr) minmax(360px, 460px);
-  gap: 28px;
-  align-items: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 40px clamp(20px, 4vw, 48px);
 }
 
-.story-panel,
 .auth-card {
   border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(10, 18, 36, 0.88), rgba(4, 10, 24, 0.82));
+  border: 1px solid rgba(95, 225, 255, 0.12);
+  background: linear-gradient(180deg, rgba(4, 10, 16, 0.92), rgba(1, 5, 9, 0.9));
   box-shadow:
-    0 30px 90px rgba(0, 0, 0, 0.35),
+    0 30px 90px rgba(0, 0, 0, 0.42),
+    0 0 56px rgba(55, 232, 255, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(18px);
 }
 
-.story-panel {
-  padding: 36px;
-  display: grid;
-  gap: 28px;
-  min-height: 620px;
-  align-content: space-between;
-}
-
-.story-top {
-  display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 18px;
-  align-items: start;
-}
-
-.brand-badge {
-  width: 72px;
-  height: 72px;
-  display: grid;
-  place-items: center;
-  border-radius: 22px;
-  font-size: 28px;
-  font-weight: 900;
-  color: #f8fafc;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.88), rgba(34, 197, 94, 0.72));
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.28);
-}
-
-.eyebrow {
-  margin: 0;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(103, 232, 249, 0.9);
-}
-
-.story-top h1,
-.auth-head h2 {
-  margin: 8px 0 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.story-top h1 {
-  font-size: clamp(34px, 4vw, 56px);
-  line-height: 0.98;
-}
-
-.lead {
-  margin: 14px 0 0;
-  max-width: 620px;
-  font-size: 17px;
-  line-height: 1.65;
-  color: rgba(226, 232, 240, 0.82);
-}
-
-.trust-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.trust-card {
-  min-height: 180px;
-  padding: 18px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    radial-gradient(120% 120% at 0% 0%, rgba(59, 130, 246, 0.08), transparent 55%),
-    rgba(255, 255, 255, 0.03);
-}
-
-.trust-card span {
+.brand-wordmark {
   display: block;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.88);
+  width: min(100%, 280px);
+  height: auto;
+  filter: drop-shadow(0 0 18px rgba(55, 232, 255, 0.2));
 }
 
-.trust-card strong {
-  display: block;
-  margin-top: 10px;
-  font-size: 19px;
-  line-height: 1.2;
-}
-
-.trust-card p {
-  margin: 12px 0 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(203, 213, 225, 0.78);
-}
-
-.status-strip {
+.auth-brand {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 18px 20px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
-}
-
-.status-copy span {
-  display: block;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(148, 163, 184, 0.88);
-}
-
-.status-copy strong {
-  display: block;
-  margin-top: 6px;
+  justify-content: center;
+  margin-top: -6px;
+  margin-bottom: -2px;
 }
 
 .auth-card {
+  width: min(100%, 520px);
   padding: 28px;
   display: grid;
-  min-height: 620px;
-  gap: 24px;
-  align-content: space-between;
+  min-height: auto;
+  gap: 14px;
+  align-content: start;
 }
 
-.auth-head {
+.auth-top {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.auth-head h2 {
-  font-size: 34px;
-  line-height: 1;
-}
-
-.auth-sub {
-  margin: 12px 0 0;
-  max-width: 340px;
-  color: rgba(203, 213, 225, 0.78);
-  line-height: 1.6;
+  justify-content: flex-end;
+  margin-bottom: -2px;
 }
 
 .lang-switch {
@@ -675,7 +407,7 @@ watch(
 .lang-btn.active {
   color: #07111f;
   font-weight: 800;
-  background: linear-gradient(135deg, rgba(253, 224, 71, 0.95), rgba(103, 232, 249, 0.72));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(142, 247, 255, 0.8));
 }
 
 .auth-form {
@@ -715,8 +447,8 @@ watch(
 
 .field-input:focus {
   outline: none;
-  border-color: rgba(103, 232, 249, 0.46);
-  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+  border-color: rgba(142, 247, 255, 0.44);
+  box-shadow: 0 0 0 4px rgba(55, 232, 255, 0.12);
 }
 
 .password-wrap {
@@ -759,7 +491,7 @@ watch(
 .remember-check input {
   width: 16px;
   height: 16px;
-  accent-color: #22c55e;
+  accent-color: #37e8ff;
 }
 
 .ghost-btn,
@@ -782,11 +514,11 @@ watch(
   align-items: center;
   justify-content: center;
   padding: 0 16px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.94), rgba(16, 185, 129, 0.82));
-  color: #06111d;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(55, 232, 255, 0.88));
+  color: #031017;
   font-size: 15px;
   font-weight: 900;
-  box-shadow: 0 18px 38px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 18px 38px rgba(55, 232, 255, 0.2);
 }
 
 .ghost-btn:hover,
@@ -815,32 +547,14 @@ watch(
 }
 
 .feedback.info {
-  border: 1px solid rgba(103, 232, 249, 0.24);
-  background: rgba(14, 165, 233, 0.1);
-  color: #bae6fd;
-}
-
-.auth-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 6px;
-  font-size: 12px;
-  color: rgba(148, 163, 184, 0.88);
+  border: 1px solid rgba(142, 247, 255, 0.24);
+  background: rgba(55, 232, 255, 0.08);
+  color: #d4fbff;
 }
 
 @media (max-width: 1180px) {
   .login-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .story-panel {
-    min-height: auto;
-  }
-
-  .trust-grid {
-    grid-template-columns: 1fr;
+    padding: 24px;
   }
 }
 
@@ -849,29 +563,21 @@ watch(
     padding: 18px;
   }
 
-  .story-panel,
   .auth-card {
     padding: 20px;
     border-radius: 24px;
   }
 
-  .story-top {
-    grid-template-columns: 56px 1fr;
-  }
-
-  .brand-badge {
-    width: 56px;
-    height: 56px;
-    border-radius: 18px;
-    font-size: 22px;
-  }
-
-  .auth-head,
   .remember-row,
-  .auth-foot,
-  .status-strip {
+  .auth-top {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .auth-brand {
+    justify-content: center;
+    margin-top: 0;
+    margin-bottom: 2px;
   }
 
   .lang-switch {

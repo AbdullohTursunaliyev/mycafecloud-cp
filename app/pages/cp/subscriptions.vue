@@ -655,7 +655,7 @@ async function togglePlan(item: any) {
 }
 
 useHead(() => ({
-  title: `${copy.value.headTitle} - MyCafeCloud`,
+  title: `${copy.value.headTitle} - NEXORA CLOUD`,
 }))
 
 await Promise.all([loadZones(), loadList()])

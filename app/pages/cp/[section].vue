@@ -41,6 +41,6 @@ const pageComponent = defineAsyncComponent(async () => {
 })
 
 useHead({
-  title: computed(() => `${copy.value.title} · MyCafeCloud CP`),
+  title: computed(() => `${copy.value.title} · NEXORA CLOUD CP`),
 })
 </script>

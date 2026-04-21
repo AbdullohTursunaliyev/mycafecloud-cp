@@ -673,7 +673,7 @@ const copy = useCpCopy(messages)
 const { formatDateTime } = useCpFormatters()
 
 useHead({
-  title: computed(() => `${copy.value.title} - MyCafeCloud CP`),
+  title: computed(() => `${copy.value.title} - NEXORA CLOUD CP`),
 })
 
 const zones = ref<any[]>([])

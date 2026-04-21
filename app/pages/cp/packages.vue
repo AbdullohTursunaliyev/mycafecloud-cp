@@ -443,7 +443,7 @@ const packagesPageCopy = {
 const copy = useCpCopy(packagesPageCopy)
 
 useHead({
-  title: computed(() => `${copy.value.headTitle} - MyCafeCloud CP`),
+  title: computed(() => `${copy.value.headTitle} - NEXORA CLOUD CP`),
 })
 
 const { formatMoney, formatDateTime } = useCpFormatters()

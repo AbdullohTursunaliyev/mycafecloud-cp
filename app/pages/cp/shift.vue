@@ -358,7 +358,7 @@ definePageMeta({
 const copy = useCpCopy(cpNativePageCopy.shift)
 
 useHead({
-  title: computed(() => `${copy.value.headTitle} - MyCafeCloud CP`),
+  title: computed(() => `${copy.value.headTitle} - NEXORA CLOUD CP`),
 })
 
 const shift = ref<any>(null)
