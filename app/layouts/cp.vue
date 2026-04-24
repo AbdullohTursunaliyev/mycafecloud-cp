@@ -35,6 +35,8 @@
     <section class="cp-main">
       <header class="cp-top">
         <div class="top-actions">
+          <CpNexoraAssistant v-if="canUseNexora" />
+
           <button class="theme-btn" type="button" @click="toggleTheme">
             <Icon :name="isDark ? 'solar:sun-2-linear' : 'solar:moon-stars-linear'" class="action-icon" />
             <span>{{ isDark ? 'Light' : 'Dark' }}</span>
@@ -105,6 +107,7 @@ const iconMap = {
   DataAnalysis: 'solar:chart-square-linear',
   Document: 'solar:document-text-linear',
   Download: 'solar:cloud-download-linear',
+  Gallery: 'solar:gallery-linear',
   Grid: 'solar:widget-5-linear',
   Histogram: 'solar:chart-linear',
   House: 'solar:home-2-linear',
@@ -178,12 +181,19 @@ function onClubSettingsUpdated(event) {
 }
 
 const currentRole = computed(() => auth.operator?.role || null)
+const canUseNexora = computed(() => auth.hasFeature('nexora_ai'))
 
 const visibleGroups = computed(() =>
-  cpNavigationGroups.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => !item.roles || item.roles.includes(currentRole.value)),
-  })),
+  cpNavigationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        const roleAllowed = !item.roles || item.roles.includes(currentRole.value)
+        const featureAllowed = !item.features || item.features.every((feature) => auth.hasFeature(feature))
+        return roleAllowed && featureAllowed
+      }),
+    }))
+    .filter((group) => group.items.length > 0),
 )
 
 const flattenedItems = computed(() => visibleGroups.value.flatMap((group) => group.items))

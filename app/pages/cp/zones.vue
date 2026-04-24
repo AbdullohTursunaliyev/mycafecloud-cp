@@ -18,7 +18,7 @@
       </template>
     </CpPageHero>
 
-    <div v-if="!canAccess" class="guard-card">
+    <div v-if="showAccessGuard" class="guard-card">
       <Icon name="lucide:shield-off" size="18" />
       <div>
         <strong>{{ copy.noAccessTitle }}</strong>
@@ -33,45 +33,27 @@
         <CpStatCard compact tone="tone-amber" :label="copy.inactiveRows" :value="String(inactiveCount)" :hint="copy.inactiveHint" />
       </div>
 
-      <div class="top-grid">
-        <CpPanelCard :title="copy.filtersTitle" :subtitle="copy.filtersSubtitle">
-          <div class="filter-grid">
-            <label class="field">
-              <span>{{ copy.statusLabel }}</span>
-              <select v-model="filters.active">
-                <option value="">{{ copy.statusAll }}</option>
-                <option value="true">{{ copy.statusActive }}</option>
-                <option value="false">{{ copy.statusInactive }}</option>
-              </select>
-            </label>
-            <label class="field field-span-2">
-              <span>{{ copy.searchLabel }}</span>
-              <input v-model.trim="filters.q" :placeholder="copy.searchPlaceholder" />
-            </label>
-          </div>
+      <CpPanelCard :title="copy.filtersTitle" :subtitle="copy.filtersSubtitle">
+        <div class="filter-toolbar">
+          <label class="field filter-status-field">
+            <span>{{ copy.statusLabel }}</span>
+            <select v-model="filters.active">
+              <option value="">{{ copy.statusAll }}</option>
+              <option value="true">{{ copy.statusActive }}</option>
+              <option value="false">{{ copy.statusInactive }}</option>
+            </select>
+          </label>
+
+          <label class="field filter-search-field">
+            <span>{{ copy.searchLabel }}</span>
+            <input v-model.trim="filters.q" :placeholder="copy.searchPlaceholder" />
+          </label>
 
           <div class="filters-actions">
             <button class="ghost-btn" type="button" @click="resetFilters">{{ copy.reset }}</button>
           </div>
-        </CpPanelCard>
-
-        <CpPanelCard :title="copy.logicTitle" :subtitle="copy.logicSubtitle">
-          <div class="logic-list">
-            <article class="logic-item">
-              <Icon name="lucide:badge-dollar-sign" size="16" />
-              <p>{{ copy.logicOne }}</p>
-            </article>
-            <article class="logic-item">
-              <Icon name="lucide:monitor-up" size="16" />
-              <p>{{ copy.logicTwo }}</p>
-            </article>
-            <article class="logic-item">
-              <Icon name="lucide:clock-3" size="16" />
-              <p>{{ copy.logicThree }}</p>
-            </article>
-          </div>
-        </CpPanelCard>
-      </div>
+        </div>
+      </CpPanelCard>
 
       <CpPanelCard :title="copy.listTitle" :subtitle="copy.listSubtitle">
         <div v-if="loading.list" class="state-box">
@@ -108,6 +90,7 @@
 
             <div class="zone-actions">
               <button class="tiny-btn" type="button" @click="openEdit(zone)">{{ copy.edit }}</button>
+              <button class="tiny-btn" type="button" @click="openWindows(zone)">{{ copy.pricingWindows }}</button>
               <button class="tiny-btn" :class="zone.is_active ? 'danger' : 'primary'" type="button" @click="toggleZone(zone)">
                 {{ zone.is_active ? copy.disable : copy.enable }}
               </button>
@@ -130,7 +113,7 @@
           </button>
         </div>
 
-        <div class="editor-grid">
+        <div class="editor-grid zone-editor-grid">
           <label class="field">
             <span>{{ copy.fieldName }}</span>
             <input v-model.trim="form.name" :placeholder="copy.fieldNamePlaceholder" />
@@ -142,7 +125,7 @@
             <small>{{ copy.fieldPriceHint }}</small>
           </label>
 
-          <label class="field field-span-2">
+          <label class="field field-state">
             <span>{{ copy.fieldState }}</span>
             <label class="check-line">
               <input v-model="form.is_active" type="checkbox" />
@@ -161,11 +144,169 @@
         </div>
       </div>
     </div>
+
+    <div v-if="windows.open" class="overlay" @click.self="closeWindows">
+      <div class="modal-shell modal-shell-wide">
+        <div class="modal-head">
+          <div>
+            <p class="modal-kicker">{{ copy.windowsKicker }}</p>
+            <h3>{{ txt(copy.windowsTitle, { zone: windows.zoneName || copy.zoneFallbackName }) }}</h3>
+            <span>{{ copy.windowsSubtitle }}</span>
+          </div>
+          <button class="icon-btn" type="button" @click="closeWindows">
+            <Icon name="lucide:x" size="16" />
+          </button>
+        </div>
+
+        <div class="window-toolbar">
+          <div class="window-summary">
+            <span class="hero-meta-badge">{{ copy.priceLabel }}: {{ money(windows.zonePrice) }} UZS</span>
+            <span class="hero-meta-badge">{{ copy.updatedAt }}: {{ windows.updatedAt ? formatDateTime(windows.updatedAt) : '-' }}</span>
+          </div>
+          <button class="primary-btn" type="button" :disabled="windows.loading || windows.saving" @click="openCreateWindow">
+            <Icon name="lucide:plus" size="15" />
+            <span>{{ copy.windowAdd }}</span>
+          </button>
+        </div>
+
+        <p v-if="windows.error" class="panel-error">{{ windows.error }}</p>
+
+        <div v-if="windows.loading" class="state-box compact-state">{{ copy.windowsLoading }}</div>
+        <div v-else-if="!windows.items.length" class="state-box compact-state">{{ copy.windowsEmpty }}</div>
+        <div v-else class="windows-grid">
+          <article v-for="item in windows.items" :key="item.id" class="window-card">
+            <div class="zone-top">
+              <div>
+                <strong>{{ item.name || copy.windowCreate }}</strong>
+                <small>ID #{{ item.id }}</small>
+              </div>
+
+              <span class="state-pill" :class="item.is_active ? 'ok' : 'muted'">
+                {{ item.is_active ? copy.statusActive : copy.statusInactive }}
+              </span>
+            </div>
+
+            <div class="window-detail">
+              <span>{{ copy.windowTimeRange }}</span>
+              <strong>{{ windowTimeLabel(item) }}</strong>
+            </div>
+
+            <div class="window-detail">
+              <span>{{ copy.windowDaysLabel }}</span>
+              <strong>{{ weekdaysLabel(item.weekdays) }}</strong>
+            </div>
+
+            <div class="window-detail">
+              <span>{{ copy.windowDateRange }}</span>
+              <strong>{{ dateRangeLabel(item.starts_on, item.ends_on) }}</strong>
+            </div>
+
+            <div class="window-detail">
+              <span>{{ copy.windowPrice }}</span>
+              <strong>{{ money(item.price_per_hour) }} UZS</strong>
+            </div>
+
+            <div class="zone-actions">
+              <button class="tiny-btn" type="button" :disabled="windows.saving" @click="openEditWindow(item)">{{ copy.edit }}</button>
+              <button class="tiny-btn" :class="item.is_active ? 'danger' : 'primary'" type="button" :disabled="windows.saving" @click="toggleWindow(item)">
+                {{ item.is_active ? copy.disable : copy.enable }}
+              </button>
+              <button class="tiny-btn danger" type="button" :disabled="windows.saving" @click="deleteWindow(item)">{{ copy.windowDelete }}</button>
+            </div>
+          </article>
+        </div>
+
+        <div v-if="windowEditor.open" class="window-editor-card">
+          <div class="modal-head window-editor-head">
+            <div>
+              <p class="modal-kicker">{{ copy.windowsKicker }}</p>
+              <h3>{{ windowEditor.mode === 'create' ? copy.windowCreate : copy.windowEdit }}</h3>
+              <span>{{ copy.windowFormSubtitle }}</span>
+            </div>
+            <button class="icon-btn" type="button" @click="closeWindowEditor">
+              <Icon name="lucide:x" size="16" />
+            </button>
+          </div>
+
+          <div class="editor-grid window-form-grid">
+            <label class="field field-span-2">
+              <span>{{ copy.windowName }}</span>
+              <input v-model.trim="windowForm.name" :placeholder="copy.windowNamePlaceholder" />
+              <small>{{ copy.windowNameHint }}</small>
+            </label>
+
+            <label class="field">
+              <span>{{ copy.windowStartsAt }}</span>
+              <input v-model="windowForm.starts_at" type="time" />
+            </label>
+
+            <label class="field">
+              <span>{{ copy.windowEndsAt }}</span>
+              <input v-model="windowForm.ends_at" type="time" />
+            </label>
+
+            <label class="field">
+              <span>{{ copy.windowStartsOn }}</span>
+              <input v-model="windowForm.starts_on" type="date" />
+              <small>{{ copy.windowDateHint }}</small>
+            </label>
+
+            <label class="field">
+              <span>{{ copy.windowEndsOn }}</span>
+              <input v-model="windowForm.ends_on" type="date" />
+              <small>{{ copy.windowDateHint }}</small>
+            </label>
+
+            <label class="field field-span-2">
+              <span>{{ copy.windowWeekdays }}</span>
+              <div class="weekday-row">
+                <button
+                  v-for="(label, index) in copy.weekdayLabels"
+                  :key="label"
+                  class="weekday-chip"
+                  :class="{ active: windowForm.weekdays.includes(index + 1) }"
+                  type="button"
+                  @click="toggleWeekday(index + 1)"
+                >
+                  {{ label }}
+                </button>
+              </div>
+              <small>{{ copy.windowWeekdaysHint }}</small>
+              <small>{{ weekdaysLabel(windowForm.weekdays) || copy.windowAllDays }}</small>
+            </label>
+
+            <label class="field">
+              <span>{{ copy.windowPrice }}</span>
+              <input v-model.number="windowForm.price_per_hour" type="number" min="0" />
+              <small>{{ copy.windowPriceHint }}</small>
+            </label>
+
+            <label class="field field-state">
+              <span>{{ copy.windowState }}</span>
+              <label class="check-line">
+                <input v-model="windowForm.is_active" type="checkbox" />
+                <span>{{ copy.windowStateActive }}</span>
+              </label>
+            </label>
+          </div>
+
+          <p v-if="windowEditor.error" class="panel-error">{{ windowEditor.error }}</p>
+
+          <div class="modal-actions">
+            <button class="ghost-btn" type="button" :disabled="windows.saving" @click="closeWindowEditor">{{ copy.cancel }}</button>
+            <button class="primary-btn" type="button" :disabled="windows.saving" @click="saveWindow">
+              {{ windows.saving ? copy.saving : copy.save }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { cpApi } from '@legacy/api/cp'
 import { useCpAuthStore } from '@legacy/stores/cpAuth'
 import { useCpCopy } from '../../../composables/useCpCopy'
@@ -179,7 +320,7 @@ definePageMeta({
 const zonesPageCopy = {
   uz: {
     headTitle: 'Zonalar',
-    eyebrow: 'Pricing map',
+    eyebrow: 'Tarif xaritasi',
     title: 'Zonalar',
     subtitle: 'Zona va tarif strukturasi boshqaruvini soddalashtiring.',
     updatedAt: 'Yangilandi',
@@ -216,7 +357,8 @@ const zonesPageCopy = {
     edit: 'Tahrirlash',
     disable: "O'chirish",
     enable: 'Yoqish',
-    modalKicker: 'Pricing editor',
+    pricingWindows: 'Tarif oynalari',
+    modalKicker: 'Tarif tahriri',
     modalCreate: 'Yangi zona',
     modalEdit: 'Zonani tahrirlash',
     modalSubtitle: 'Zona nomi va 1 soatlik tarifni kiriting.',
@@ -233,10 +375,50 @@ const zonesPageCopy = {
     save: 'Saqlash',
     nameError: "Zona nomi kamida 2 belgidan iborat bo'lishi kerak.",
     priceError: "Narx 0 yoki undan katta son bo'lishi kerak.",
+    requestError: "So'rov bajarilmadi.",
+    windowsKicker: 'Dinamik tarif',
+    windowsTitle: '{zone} uchun tarif oynalari',
+    windowsSubtitle: 'Kun va vaqt bo‘yicha maxsus tariflarni boshqaring.',
+    windowsEmpty: 'Bu zona uchun hali tarif oynasi yo‘q.',
+    windowsLoading: 'Tarif oynalari yuklanmoqda...',
+    windowAdd: 'Oyna qo‘shish',
+    windowCreate: 'Yangi tarif oynasi',
+    windowEdit: 'Tarif oynasini tahrirlash',
+    windowFormSubtitle: 'Boshlanish/tugash vaqti, kunlar va alohida narxni kiriting.',
+    windowName: 'Oyna nomi',
+    windowNamePlaceholder: 'Masalan: Pik 18-23',
+    windowNameHint: 'Ixtiyoriy. Operatorga bu qoida qachon ishlashini tushuntiradi.',
+    windowStartsAt: 'Boshlanish vaqti',
+    windowEndsAt: 'Tugash vaqti',
+    windowStartsOn: 'Boshlanish sanasi',
+    windowEndsOn: 'Tugash sanasi',
+    windowDateRange: 'Amal qilish muddati',
+    windowDateHint: 'Bo‘sh qoldirilsa, muddat cheklanmaydi.',
+    windowWeekdays: 'Kunlar',
+    windowWeekdaysHint: 'Hech narsa tanlanmasa, har kuni ishlaydi.',
+    windowAllDays: 'Har kuni',
+    windowAlwaysDate: 'Doimiy',
+    windowPrice: 'Oyna narxi (UZS/soat)',
+    windowPriceHint: 'Baza zona narxi o‘rniga shu narx ishlaydi.',
+    windowState: 'Oyna holati',
+    windowStateActive: 'Faol',
+    windowTimeRange: 'Vaqt oralig‘i',
+    windowDaysLabel: 'Ishlaydigan kunlar',
+    windowDelete: "O'chirish",
+    windowDeleteConfirm: '"{name}" tarif oynasi o‘chirilsinmi?',
+    windowCreated: 'Tarif oynasi yaratildi.',
+    windowUpdated: 'Tarif oynasi saqlandi.',
+    windowDeleted: 'Tarif oynasi o‘chirildi.',
+    windowNameError: "Oyna nomi kamida 2 belgidan iborat bo'lishi kerak.",
+    windowTimeError: 'Boshlanish va tugash vaqti to‘g‘ri kiritilishi kerak.',
+    windowDateError: 'Tugash sanasi boshlanish sanasidan oldin bo‘lishi mumkin emas.',
+    windowPriceError: "Oyna narxi 0 yoki undan katta son bo'lishi kerak.",
+    zoneFallbackName: 'Zona',
+    weekdayLabels: ['Du', 'Se', 'Cho', 'Pa', 'Ju', 'Sha', 'Ya'],
   },
   ru: {
     headTitle: 'Зоны',
-    eyebrow: 'Pricing map',
+    eyebrow: 'Карта тарифов',
     title: 'Зоны',
     subtitle: 'Управляйте зоной и тарифной структурой в понятном виде.',
     updatedAt: 'Обновлено',
@@ -273,7 +455,8 @@ const zonesPageCopy = {
     edit: 'Изменить',
     disable: 'Отключить',
     enable: 'Включить',
-    modalKicker: 'Pricing editor',
+    pricingWindows: 'Тарифные окна',
+    modalKicker: 'Редактор тарифа',
     modalCreate: 'Новая зона',
     modalEdit: 'Редактирование зоны',
     modalSubtitle: 'Укажите название зоны и цену за 1 час.',
@@ -290,10 +473,50 @@ const zonesPageCopy = {
     save: 'Сохранить',
     nameError: 'Название зоны должно быть не короче 2 символов.',
     priceError: 'Цена должна быть числом 0 или больше.',
+    requestError: 'Запрос не выполнен.',
+    windowsKicker: 'Динамический тариф',
+    windowsTitle: 'Тарифные окна для {zone}',
+    windowsSubtitle: 'Управляйте специальными тарифами по дням и времени.',
+    windowsEmpty: 'Для этой зоны пока нет тарифных окон.',
+    windowsLoading: 'Загружаем тарифные окна...',
+    windowAdd: 'Добавить окно',
+    windowCreate: 'Новое тарифное окно',
+    windowEdit: 'Редактирование тарифного окна',
+    windowFormSubtitle: 'Укажите время начала/окончания, дни недели и отдельную цену.',
+    windowName: 'Название окна',
+    windowNamePlaceholder: 'Например: Пик 18-23',
+    windowNameHint: 'Необязательно. Помогает оператору понять правило.',
+    windowStartsAt: 'Время начала',
+    windowEndsAt: 'Время окончания',
+    windowStartsOn: 'Дата начала',
+    windowEndsOn: 'Дата окончания',
+    windowDateRange: 'Срок действия',
+    windowDateHint: 'Если оставить пустым, срок не ограничен.',
+    windowWeekdays: 'Дни недели',
+    windowWeekdaysHint: 'Если ничего не выбрано, правило работает каждый день.',
+    windowAllDays: 'Каждый день',
+    windowAlwaysDate: 'Без ограничения',
+    windowPrice: 'Цена окна (UZS/час)',
+    windowPriceHint: 'Эта цена заменяет базовый тариф зоны.',
+    windowState: 'Состояние окна',
+    windowStateActive: 'Активна',
+    windowTimeRange: 'Интервал времени',
+    windowDaysLabel: 'Дни работы',
+    windowDelete: 'Удалить',
+    windowDeleteConfirm: 'Удалить тарифное окно "{name}"?',
+    windowCreated: 'Тарифное окно создано.',
+    windowUpdated: 'Тарифное окно сохранено.',
+    windowDeleted: 'Тарифное окно удалено.',
+    windowNameError: 'Название окна должно быть не короче 2 символов.',
+    windowTimeError: 'Нужно корректно указать время начала и окончания.',
+    windowDateError: 'Дата окончания не может быть раньше даты начала.',
+    windowPriceError: 'Цена окна должна быть числом 0 или больше.',
+    zoneFallbackName: 'Зона',
+    weekdayLabels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
   },
   en: {
     headTitle: 'Zones',
-    eyebrow: 'Pricing map',
+    eyebrow: 'Tariff map',
     title: 'Zones',
     subtitle: 'Manage hall zones and hourly tariffs in a clear layout.',
     updatedAt: 'Updated',
@@ -330,7 +553,8 @@ const zonesPageCopy = {
     edit: 'Edit',
     disable: 'Disable',
     enable: 'Enable',
-    modalKicker: 'Pricing editor',
+    pricingWindows: 'Pricing windows',
+    modalKicker: 'Tariff editor',
     modalCreate: 'New zone',
     modalEdit: 'Edit zone',
     modalSubtitle: 'Set the zone title and hourly price.',
@@ -347,6 +571,46 @@ const zonesPageCopy = {
     save: 'Save',
     nameError: 'Zone name should be at least 2 characters long.',
     priceError: 'Price should be 0 or greater.',
+    requestError: 'Request failed.',
+    windowsKicker: 'Dynamic pricing',
+    windowsTitle: 'Pricing windows for {zone}',
+    windowsSubtitle: 'Manage day/time-specific tariff overrides.',
+    windowsEmpty: 'No pricing windows for this zone yet.',
+    windowsLoading: 'Loading pricing windows...',
+    windowAdd: 'Add window',
+    windowCreate: 'New window',
+    windowEdit: 'Edit window',
+    windowFormSubtitle: 'Set start/end time, weekdays, and an override price.',
+    windowName: 'Window name',
+    windowNamePlaceholder: 'Example: Peak 18-23',
+    windowNameHint: 'Optional. Helps operators understand the rule.',
+    windowStartsAt: 'Start time',
+    windowEndsAt: 'End time',
+    windowStartsOn: 'Start date',
+    windowEndsOn: 'End date',
+    windowDateRange: 'Validity period',
+    windowDateHint: 'Leave empty if this tariff should stay open-ended.',
+    windowWeekdays: 'Weekdays',
+    windowWeekdaysHint: 'If nothing is selected, the rule runs every day.',
+    windowAllDays: 'Every day',
+    windowAlwaysDate: 'Always active',
+    windowPrice: 'Window price (UZS/hour)',
+    windowPriceHint: 'This price overrides the base zone tariff.',
+    windowState: 'Window state',
+    windowStateActive: 'Active',
+    windowTimeRange: 'Time range',
+    windowDaysLabel: 'Running days',
+    windowDelete: 'Delete',
+    windowDeleteConfirm: 'Delete window "{name}"?',
+    windowCreated: 'Pricing window created.',
+    windowUpdated: 'Pricing window saved.',
+    windowDeleted: 'Pricing window deleted.',
+    windowNameError: 'Window name should be at least 2 characters long.',
+    windowTimeError: 'Start and end time must be valid.',
+    windowDateError: 'End date cannot be earlier than start date.',
+    windowPriceError: 'Window price should be 0 or greater.',
+    zoneFallbackName: 'Zone',
+    weekdayLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   },
 }
 
@@ -357,12 +621,26 @@ useHead({
 })
 
 const auth = useCpAuthStore()
-const { formatMoney, formatDateTime } = useCpFormatters()
+const { formatMoney, formatDate, formatDateTime } = useCpFormatters()
+
+function txt(template: string, params: Record<string, string | number>) {
+  return template.replace(/\{(\w+)\}/g, (_, token) => String(params[token] ?? `{${token}}`))
+}
+
+function errorText(error: any, fallback: string) {
+  const message = error?.response?.data?.message
+  const errors = error?.response?.data?.errors
+  if (message) return message
+  if (errors && typeof errors === 'object') return Object.values(errors).flat().join(' ')
+  return fallback
+}
 
 const canAccess = computed(() => {
   const role = auth.operator?.role
   return role === 'admin' || role === 'owner'
 })
+
+const showAccessGuard = computed(() => Boolean(auth.operator) && !canAccess.value)
 
 const loading = reactive({
   list: false,
@@ -390,6 +668,36 @@ const form = reactive({
   is_active: true,
 })
 
+const windows = reactive({
+  open: false,
+  zoneId: null as number | null,
+  zoneName: '',
+  zonePrice: 0,
+  loading: false,
+  saving: false,
+  error: '',
+  updatedAt: null as string | null,
+  items: [] as any[],
+})
+
+const windowEditor = reactive({
+  open: false,
+  mode: 'create' as 'create' | 'edit',
+  id: null as number | null,
+  error: '',
+})
+
+const windowForm = reactive({
+  name: '',
+  starts_at: '18:00',
+  ends_at: '23:00',
+  starts_on: '',
+  ends_on: '',
+  weekdays: [] as number[],
+  price_per_hour: 0,
+  is_active: true,
+})
+
 const updatedAtLabel = computed(() => (updatedAt.value ? formatDateTime(updatedAt.value) : '-'))
 const activeCount = computed(() => items.value.filter((item) => !!item.is_active).length)
 const inactiveCount = computed(() => Math.max(0, items.value.length - activeCount.value))
@@ -413,6 +721,35 @@ function money(value: any) {
   return formatMoney(Number(value || 0))
 }
 
+function normalizeTimeInput(value: any) {
+  const raw = String(value || '').trim()
+  if (!raw) return '--:--'
+  return raw.slice(0, 5)
+}
+
+function weekdaysLabel(days: any) {
+  const normalized = Array.isArray(days)
+    ? days.map((day) => Number(day)).filter((day) => day >= 1 && day <= 7).sort((a, b) => a - b)
+    : []
+
+  if (!normalized.length) return copy.value.windowAllDays
+  return normalized.map((day) => copy.value.weekdayLabels?.[day - 1] || String(day)).join(', ')
+}
+
+function windowTimeLabel(item: any) {
+  return `${normalizeTimeInput(item?.starts_at)} - ${normalizeTimeInput(item?.ends_at)}`
+}
+
+function dateRangeLabel(startsOn: string | null | undefined, endsOn: string | null | undefined) {
+  const start = startsOn ? formatDate(startsOn) : ''
+  const end = endsOn ? formatDate(endsOn) : ''
+
+  if (start && end) return `${start} - ${end}`
+  if (start) return `${start} ->`
+  if (end) return `-> ${end}`
+  return copy.value.windowAlwaysDate
+}
+
 function resetFilters() {
   filters.active = ''
   filters.q = ''
@@ -424,10 +761,34 @@ function resetForm() {
   form.is_active = true
 }
 
+function resetWindowForm(defaultPrice = windows.zonePrice || 0) {
+  windowForm.name = ''
+  windowForm.starts_at = '18:00'
+  windowForm.ends_at = '23:00'
+  windowForm.starts_on = ''
+  windowForm.ends_on = ''
+  windowForm.weekdays = []
+  windowForm.price_per_hour = Number(defaultPrice || 0)
+  windowForm.is_active = true
+}
+
 function fillForm(item: any) {
   form.name = item?.name ?? ''
   form.price_per_hour = Number(item?.price_per_hour ?? 0)
   form.is_active = !!item?.is_active
+}
+
+function fillWindowForm(item: any) {
+  windowForm.name = item?.name ?? ''
+  windowForm.starts_at = normalizeTimeInput(item?.starts_at)
+  windowForm.ends_at = normalizeTimeInput(item?.ends_at)
+  windowForm.starts_on = String(item?.starts_on || '')
+  windowForm.ends_on = String(item?.ends_on || '')
+  windowForm.weekdays = Array.isArray(item?.weekdays)
+    ? item.weekdays.map((day: any) => Number(day)).filter((day: number) => day >= 1 && day <= 7)
+    : []
+  windowForm.price_per_hour = Number(item?.price_per_hour ?? windows.zonePrice ?? 0)
+  windowForm.is_active = !!item?.is_active
 }
 
 function openCreate() {
@@ -451,6 +812,47 @@ function closeModal() {
   modal.error = ''
 }
 
+function closeWindowEditor() {
+  windowEditor.open = false
+  windowEditor.error = ''
+}
+
+function closeWindows() {
+  windows.open = false
+  windows.zoneId = null
+  windows.zoneName = ''
+  windows.zonePrice = 0
+  windows.error = ''
+  windows.updatedAt = null
+  windows.items = []
+  closeWindowEditor()
+}
+
+function openCreateWindow() {
+  resetWindowForm()
+  windowEditor.mode = 'create'
+  windowEditor.id = null
+  windowEditor.error = ''
+  windowEditor.open = true
+}
+
+function openEditWindow(item: any) {
+  fillWindowForm(item)
+  windowEditor.mode = 'edit'
+  windowEditor.id = Number(item.id)
+  windowEditor.error = ''
+  windowEditor.open = true
+}
+
+function toggleWeekday(day: number) {
+  if (windowForm.weekdays.includes(day)) {
+    windowForm.weekdays = windowForm.weekdays.filter((item) => item !== day)
+    return
+  }
+
+  windowForm.weekdays = [...windowForm.weekdays, day].sort((a, b) => a - b)
+}
+
 async function reload() {
   if (!canAccess.value) return
   loading.list = true
@@ -466,6 +868,34 @@ async function reload() {
   } finally {
     loading.list = false
   }
+}
+
+async function reloadWindows() {
+  if (!windows.zoneId) return
+
+  windows.loading = true
+  windows.error = ''
+  try {
+    const response = await cpApi.zonePricingWindows(windows.zoneId)
+    const payload = response?.data?.data ?? response?.data ?? []
+    windows.items = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : []
+    windows.updatedAt = new Date().toISOString()
+  } catch (error: any) {
+    windows.items = []
+    windows.error = errorText(error, copy.value.requestError)
+  } finally {
+    windows.loading = false
+  }
+}
+
+async function openWindows(zone: any) {
+  windows.zoneId = Number(zone.id)
+  windows.zoneName = String(zone.name || `#${zone.id}`)
+  windows.zonePrice = Number(zone.price_per_hour || 0)
+  windows.error = ''
+  windows.open = true
+  closeWindowEditor()
+  await reloadWindows()
 }
 
 async function save() {
@@ -492,11 +922,69 @@ async function save() {
     closeModal()
     await reload()
   } catch (error: any) {
-    const message = error?.response?.data?.message
-    const errors = error?.response?.data?.errors
-    modal.error = message || (errors ? Object.values(errors).flat().join(' ') : 'Request failed')
+    modal.error = errorText(error, copy.value.requestError)
   } finally {
     loading.save = false
+  }
+}
+
+function windowPayload() {
+  return {
+    name: windowForm.name.trim() ? windowForm.name.trim() : null,
+    starts_at: windowForm.starts_at,
+    ends_at: windowForm.ends_at,
+    starts_on: windowForm.starts_on || null,
+    ends_on: windowForm.ends_on || null,
+    weekdays: [...windowForm.weekdays],
+    price_per_hour: Number(windowForm.price_per_hour || 0),
+    is_active: !!windowForm.is_active,
+  }
+}
+
+function validateWindow() {
+  windowEditor.error = ''
+
+  if (windowForm.name.trim() && windowForm.name.trim().length < 2) {
+    windowEditor.error = copy.value.windowNameError
+    return false
+  }
+  if (!windowForm.starts_at || !windowForm.ends_at) {
+    windowEditor.error = copy.value.windowTimeError
+    return false
+  }
+  if (windowForm.starts_on && windowForm.ends_on && windowForm.starts_on > windowForm.ends_on) {
+    windowEditor.error = copy.value.windowDateError
+    return false
+  }
+
+  const pph = Number(windowForm.price_per_hour || 0)
+  if (!Number.isFinite(pph) || pph < 0) {
+    windowEditor.error = copy.value.windowPriceError
+    return false
+  }
+
+  return true
+}
+
+async function saveWindow() {
+  if (!windows.zoneId || !validateWindow()) return
+
+  windows.saving = true
+  try {
+    if (windowEditor.mode === 'create') {
+      await cpApi.zonePricingWindowCreate(windows.zoneId, windowPayload())
+      ElMessage.success(copy.value.windowCreated)
+    } else if (windowEditor.id) {
+      await cpApi.zonePricingWindowUpdate(windows.zoneId, windowEditor.id, windowPayload())
+      ElMessage.success(copy.value.windowUpdated)
+    }
+
+    closeWindowEditor()
+    await reloadWindows()
+  } catch (error: any) {
+    windowEditor.error = errorText(error, copy.value.requestError)
+  } finally {
+    windows.saving = false
   }
 }
 
@@ -510,16 +998,72 @@ async function toggleZone(item: any) {
   }
 }
 
-reload()
+async function toggleWindow(item: any) {
+  if (!windows.zoneId) return
+
+  windows.saving = true
+  windows.error = ''
+  try {
+    await cpApi.zonePricingWindowToggle(windows.zoneId, item.id)
+    await reloadWindows()
+  } catch (error: any) {
+    windows.error = errorText(error, copy.value.requestError)
+  } finally {
+    windows.saving = false
+  }
+}
+
+async function deleteWindow(item: any) {
+  if (!windows.zoneId) return
+
+  try {
+    await ElMessageBox.confirm(
+      txt(copy.value.windowDeleteConfirm, { name: item.name || `#${item.id}` }),
+      copy.value.windowDelete,
+      {
+        type: 'warning',
+        confirmButtonText: copy.value.windowDelete,
+        cancelButtonText: copy.value.cancel,
+      },
+    )
+  } catch {
+    return
+  }
+
+  windows.saving = true
+  windows.error = ''
+  try {
+    await cpApi.zonePricingWindowDelete(windows.zoneId, item.id)
+    if (windowEditor.id === Number(item.id)) closeWindowEditor()
+    ElMessage.success(copy.value.windowDeleted)
+    await reloadWindows()
+  } catch (error: any) {
+    windows.error = errorText(error, copy.value.requestError)
+  } finally {
+    windows.saving = false
+  }
+}
+
+async function ensureInitialLoad() {
+  if (!canAccess.value || loading.list || items.value.length) return
+  await reload()
+}
+
+watch(canAccess, (allowed) => {
+  if (allowed) {
+    void ensureInitialLoad()
+  }
+})
+
+onMounted(() => {
+  void ensureInitialLoad()
+})
 </script>
 
 <style scoped>
 .zones-page,
 .stats-grid,
-.top-grid,
 .hero-tools,
-.filter-grid,
-.logic-list,
 .zones-grid,
 .editor-grid {
   display: grid;
@@ -529,10 +1073,6 @@ reload()
 .stats-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
-}
-
-.top-grid {
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
 }
 
 .hero-tools {
@@ -557,8 +1097,11 @@ reload()
   font-size: 13px;
 }
 
-.filter-grid {
-  grid-template-columns: 220px minmax(0, 1fr);
+.filter-toolbar {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) max-content;
+  align-items: end;
+  gap: 14px;
 }
 
 .field-span-2 {
@@ -578,8 +1121,8 @@ reload()
   text-transform: uppercase;
 }
 
-.field input,
-.field select {
+.field > input,
+.field > select {
   min-height: 44px;
   width: 100%;
   padding: 0 14px;
@@ -596,6 +1139,15 @@ reload()
   font-size: 12px;
 }
 
+.zone-editor-grid,
+.window-form-grid {
+  align-items: start;
+}
+
+.field-state {
+  align-self: end;
+}
+
 .filters-actions,
 .zone-top,
 .zone-actions,
@@ -609,27 +1161,7 @@ reload()
 
 .filters-actions {
   justify-content: flex-end;
-}
-
-.logic-list {
-  gap: 12px;
-}
-
-.logic-item {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid var(--stroke);
-  border-radius: 18px;
-  background: var(--surface-soft);
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.logic-item p {
-  margin: 0;
+  align-self: end;
 }
 
 .zones-grid {
@@ -724,6 +1256,18 @@ reload()
   font-size: 12px;
 }
 
+.hero-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 .state-box {
   min-height: 180px;
   display: grid;
@@ -772,6 +1316,14 @@ reload()
   box-shadow: var(--shadow-lg);
 }
 
+.modal-shell-wide {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .modal-head {
   align-items: flex-start;
 }
@@ -815,14 +1367,35 @@ reload()
 .check-line {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 14px;
+  justify-content: space-between;
+  gap: 14px;
+  width: min(280px, 100%);
+  min-height: 52px;
+  padding: 0 16px;
   border: 1px solid var(--stroke);
   border-radius: 16px;
   background: var(--surface-soft);
   color: var(--text);
   font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.check-line input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: color-mix(in srgb, var(--accent) 68%, white);
+}
+
+.check-line input[type='checkbox']:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 48%, white);
+  outline-offset: 2px;
 }
 
 .panel-error {
@@ -833,6 +1406,85 @@ reload()
   background: color-mix(in srgb, var(--danger) 8%, var(--surface));
   color: var(--danger);
   font-size: 13px;
+}
+
+.window-toolbar,
+.window-summary,
+.weekday-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.window-toolbar {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.compact-state {
+  min-height: 120px;
+}
+
+.windows-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.window-card,
+.window-editor-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--stroke);
+  border-radius: 22px;
+  background: var(--surface-soft);
+}
+
+.window-card small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.window-detail {
+  display: grid;
+  gap: 6px;
+}
+
+.window-detail span {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.window-detail strong {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.window-editor-head h3 {
+  font-size: 24px;
+}
+
+.weekday-chip {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.weekday-chip.active {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--stroke));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
 }
 
 .ghost-btn,
@@ -875,11 +1527,11 @@ reload()
 }
 
 @media (max-width: 1180px) {
-  .top-grid,
   .stats-grid,
   .zones-grid,
+  .windows-grid,
   .editor-grid,
-  .filter-grid {
+  .filter-toolbar {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -890,6 +1542,8 @@ reload()
 
 @media (max-width: 720px) {
   .hero-tools,
+  .window-toolbar,
+  .window-summary,
   .modal-actions,
   .zone-top,
   .zone-actions,

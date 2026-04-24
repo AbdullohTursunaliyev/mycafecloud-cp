@@ -153,6 +153,96 @@ export const cpApi = {
     zoneToggle(id) {
         return http.post(`/zones/${id}/toggle`)
     },
+    clubVisuals(params = {}) {
+        return http.get('/club-visuals', { params })
+    },
+    clubVisualCreate(payload) {
+        return http.post('/club-visuals', payload)
+    },
+    nexoraOverview(params = {}) {
+        return http.get('/nexora-assistant/overview', { params })
+    },
+    nexoraPlan(payload = {}) {
+        return http.post('/nexora-assistant/plan', payload)
+    },
+    nexoraExecute(payload = {}) {
+        return http.post('/nexora-assistant/execute', payload)
+    },
+    nexoraAutopilot(payload = {}) {
+        return http.post('/nexora-assistant/autopilot', payload)
+    },
+    nexoraSpeak(payload = {}) {
+        return http.post('/nexora-assistant/speak', payload, {
+            responseType: 'blob',
+        })
+    },
+    clubVisualGenerateDraft(payload) {
+        return http.post('/club-visuals/generate-draft', payload)
+    },
+    clubVisualUpdate(id, payload) {
+        return http.patch(`/club-visuals/${id}`, payload)
+    },
+    clubVisualToggle(id) {
+        return http.post(`/club-visuals/${id}/toggle`)
+    },
+    clubVisualDelete(id) {
+        return http.delete(`/club-visuals/${id}`)
+    },
+    shellBanners(params = {}) {
+        return http.get('/shell-banners', { params })
+    },
+    shellBannerCreate(payload) {
+        return http.post('/shell-banners', payload)
+    },
+    shellBannerUpdate(id, payload) {
+        return http.patch(`/shell-banners/${id}`, payload)
+    },
+    shellBannerToggle(id) {
+        return http.post(`/shell-banners/${id}/toggle`)
+    },
+    shellBannerDelete(id) {
+        return http.delete(`/shell-banners/${id}`)
+    },
+    shellBannerImageUpload(formData) {
+        return http.post('/shell-banners/upload-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
+    shellBannerLogoUpload(formData) {
+        return http.post('/shell-banners/upload-logo', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
+    shellBannerAudioUpload(formData) {
+        return http.post('/shell-banners/upload-audio', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
+    clubVisualImageUpload(formData) {
+        return http.post('/club-visuals/upload-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
+    clubVisualAudioUpload(formData) {
+        return http.post('/club-visuals/upload-audio', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
+    zonePricingWindows(zoneId, params = {}) {
+        return http.get(`/zones/${zoneId}/pricing-windows`, { params })
+    },
+    zonePricingWindowCreate(zoneId, payload) {
+        return http.post(`/zones/${zoneId}/pricing-windows`, payload)
+    },
+    zonePricingWindowUpdate(zoneId, windowId, payload) {
+        return http.patch(`/zones/${zoneId}/pricing-windows/${windowId}`, payload)
+    },
+    zonePricingWindowToggle(zoneId, windowId) {
+        return http.post(`/zones/${zoneId}/pricing-windows/${windowId}/toggle`)
+    },
+    zonePricingWindowDelete(zoneId, windowId) {
+        return http.delete(`/zones/${zoneId}/pricing-windows/${windowId}`)
+    },
     packagesList(params){ return http.get('/packages', { params }) },
     packagesCreate(payload){ return http.post('/packages', payload) },
     packagesUpdate(id, payload){ return http.patch(`/packages/${id}`, payload) },
@@ -192,6 +282,12 @@ export const cpApi = {
 
     activeSessions() {
         return http.get('/sessions/active')
+    },
+    pauseSession(id) {
+        return http.post(`/sessions/${id}/pause`)
+    },
+    resumeSession(id) {
+        return http.post(`/sessions/${id}/resume`)
     },
     stopSession(id) {
         return http.post(`/sessions/${id}/stop`)
@@ -291,6 +387,3 @@ export const cpApi = {
         return http.get('/billing-logs', { params })
     },
 }
-
-
-

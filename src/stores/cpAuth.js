@@ -8,7 +8,22 @@ export const useCpAuthStore = defineStore('cpAuth', {
         operator: null,
         loading: false,
     }),
+    getters: {
+        tenantPlan(state) {
+            return state.tenant?.saas_plan || null
+        },
+        tenantFeatures() {
+            return this.tenantPlan?.features || {}
+        },
+        isProPlan() {
+            return String(this.tenantPlan?.code || '').toLowerCase() === 'pro'
+        },
+    },
     actions: {
+        hasFeature(feature) {
+            if (!feature) return true
+            return Boolean(this.tenantFeatures?.[feature])
+        },
         async fetchMe() {
             this.loading = true
             try {

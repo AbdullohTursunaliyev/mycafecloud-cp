@@ -603,9 +603,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { cpApi } from '@legacy/api/cp'
+import { useCpAuthStore } from '@legacy/stores/cpAuth'
 import { useCpFormatters } from '../../../composables/useCpFormatters'
 import { useCpCopy } from '../../../composables/useCpCopy'
 import { useCpTheme } from '../../../composables/useCpTheme'
@@ -948,6 +949,7 @@ function dateString(offsetDays = 0) {
 
 const { formatMoney, formatDateTime } = useCpFormatters()
 const { isDark } = useCpTheme()
+const auth = useCpAuthStore()
 const filters = reactive({ from: dateString(-6), to: dateString(0) })
 const activeTab = ref<ReportTab>('overview')
 const overview = ref<any>(null)
@@ -981,15 +983,27 @@ const compareError = ref('')
 const autopilotError = ref('')
 const exchangeError = ref('')
 const refreshedAt = ref<string | null>(null)
+const canUseAiInsights = computed(() => auth.hasFeature('ai_insights'))
+const canUseAiAutopilot = computed(() => auth.hasFeature('ai_autopilot'))
 
-const tabs = computed(() => [
-  { key: 'overview', label: copy.value.tabs.overview, icon: 'lucide:layout-dashboard' },
-  { key: 'operations', label: copy.value.tabs.operations, icon: 'lucide:activity' },
-  { key: 'insights', label: copy.value.tabs.insights, icon: 'lucide:lightbulb' },
-  { key: 'autopilot', label: copy.value.tabs.autopilot, icon: 'lucide:bot' },
-  { key: 'exchange', label: copy.value.tabs.exchange, icon: 'lucide:arrow-left-right' },
-  { key: 'compare', label: copy.value.tabs.compare, icon: 'lucide:split-square-horizontal' },
-])
+const tabs = computed(() => {
+  const items = [
+    { key: 'overview', label: copy.value.tabs.overview, icon: 'lucide:layout-dashboard' },
+    { key: 'operations', label: copy.value.tabs.operations, icon: 'lucide:activity' },
+    { key: 'exchange', label: copy.value.tabs.exchange, icon: 'lucide:arrow-left-right' },
+    { key: 'compare', label: copy.value.tabs.compare, icon: 'lucide:split-square-horizontal' },
+  ] as Array<{ key: ReportTab; label: string; icon: string }>
+
+  if (canUseAiInsights.value) {
+    items.splice(2, 0, { key: 'insights', label: copy.value.tabs.insights, icon: 'lucide:lightbulb' })
+  }
+
+  if (canUseAiAutopilot.value) {
+    items.splice(canUseAiInsights.value ? 3 : 2, 0, { key: 'autopilot', label: copy.value.tabs.autopilot, icon: 'lucide:bot' })
+  }
+
+  return items
+})
 
 const isLoadingAny = computed(() => loadingOverview.value || loadingCompare.value || loadingAutopilot.value || loadingExchange.value)
 const pageError = computed(() => overviewError.value || compareError.value || autopilotError.value || exchangeError.value)
@@ -1289,6 +1303,11 @@ async function loadCompare() {
 }
 
 async function loadAutopilot() {
+  if (!canUseAiAutopilot.value) {
+    autopilotData.value = null
+    autopilotError.value = ''
+    return
+  }
   loadingAutopilot.value = true
   autopilotError.value = ''
   try {
@@ -1370,9 +1389,24 @@ async function saveExchangeConfig() {
 }
 
 async function refreshAll() {
-  await Promise.all([loadOverview(), loadAutopilot(), loadExchange(), compareKey.value ? loadCompare() : Promise.resolve()])
+  await Promise.all([
+    loadOverview(),
+    canUseAiAutopilot.value ? loadAutopilot() : Promise.resolve(),
+    loadExchange(),
+    compareKey.value ? loadCompare() : Promise.resolve(),
+  ])
   refreshedAt.value = new Date().toISOString()
 }
+
+watch(
+  tabs,
+  (value) => {
+    if (!value.some((tab) => tab.key === activeTab.value)) {
+      activeTab.value = value[0]?.key || 'overview'
+    }
+  },
+  { immediate: true },
+)
 
 onMounted(refreshAll)
 </script>

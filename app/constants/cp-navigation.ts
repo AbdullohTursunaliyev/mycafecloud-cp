@@ -28,6 +28,8 @@ export const cpNavigationGroups = [
       { to: '/cp/install-center', labelKey: 'layout.menu.installCenter', icon: 'Download', roles: ['admin', 'owner'] },
       { to: '/cp/shell-games', labelKey: 'layout.menu.shellGames', icon: 'VideoPlay', roles: ['admin', 'owner'] },
       { to: '/cp/promotions', labelKey: 'layout.menu.promotions', icon: 'Present', roles: ['admin', 'owner'] },
+      { to: '/cp/shell-banners', labelKey: 'layout.menu.shellBanners', icon: 'Image', roles: ['admin', 'owner'] },
+      { to: '/cp/club-visuals', labelKey: 'layout.menu.clubVisuals', icon: 'Gallery', roles: ['admin', 'owner'], features: ['ai_generation'] },
       { to: '/cp/zones', labelKey: 'layout.menu.zones', icon: 'MapLocation', roles: ['admin', 'owner'] },
       { to: '/cp/packages', labelKey: 'layout.menu.packages', icon: 'Box', roles: ['admin', 'owner'] },
       { to: '/cp/subscriptions', labelKey: 'layout.menu.subscriptions', icon: 'Ticket', roles: ['admin', 'owner'] },
