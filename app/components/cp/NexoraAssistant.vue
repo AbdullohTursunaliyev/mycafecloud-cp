@@ -27,6 +27,7 @@
             class="nexora-core"
             :class="{
               listening: recognizing,
+              speaking: speakingAudio,
               busy: voiceSending || loading.plan || loading.execute,
               unsupported: !speechSupported,
             }"
@@ -84,118 +85,33 @@
             </div>
           </div>
 
-          <section v-if="loading.overview || watchSummary || watchAlerts.length || watchActions.length" class="nexora-watch-shell">
-            <div class="nexora-watch-head">
-              <div>
-                <p class="nexora-section-kicker">{{ ui.watchKicker }}</p>
-                <h4>{{ watchSummary?.title || ui.watchLoadingTitle }}</h4>
-                <p>{{ watchSummary?.text || ui.watchLoadingText }}</p>
-              </div>
-              <span v-if="loading.overview" class="nexora-watch-badge">{{ ui.refreshing }}</span>
-            </div>
+          <details class="nexora-prompt-drawer">
+            <summary class="nexora-prompt-summary">
+              <span>
+                <Icon name="lucide:wand-sparkles" size="15" />
+                <strong>{{ assistantUi.quickPromptsTitle }}</strong>
+              </span>
+              <small>{{ assistantUi.quickPromptsHint }}</small>
+              <Icon class="nexora-prompt-chevron" name="lucide:chevron-down" size="16" />
+            </summary>
 
-            <div v-if="watchMetrics" class="nexora-watch-metrics">
-              <div class="watch-metric">
-                <span>{{ ui.metricOnline }}</span>
-                <strong>{{ watchMetrics.online_pcs }}</strong>
-              </div>
-              <div class="watch-metric">
-                <span>{{ ui.metricActive }}</span>
-                <strong>{{ watchMetrics.active_sessions }}</strong>
-              </div>
-              <div class="watch-metric">
-                <span>{{ ui.metricIdle }}</span>
-                <strong>{{ watchMetrics.idle_online_pcs }}</strong>
-              </div>
-              <div class="watch-metric">
-                <span>{{ ui.metricOffline }}</span>
-                <strong>{{ watchMetrics.offline_pcs }}</strong>
-              </div>
-            </div>
-
-            <div v-if="watchAlerts.length" class="nexora-watch-grid">
-              <article
-                v-for="alert in watchAlerts"
-                :key="alert.id"
-                class="nexora-watch-card"
-                :class="`severity-${alert.severity || 'info'}`"
-              >
-                <div class="nexora-watch-card-top">
-                  <span class="nexora-watch-tag">{{ ui.watchAlertLabel }}</span>
-                  <strong>{{ alert.title }}</strong>
-                </div>
-                <p>{{ alert.body }}</p>
-                <button
-                  class="nexora-watch-action"
-                  type="button"
-                  :disabled="voiceSending || loading.plan || loading.execute"
-                  @click="sendSuggestion(alert.prompt)"
-                >
-                  {{ alert.action_label || ui.watchRun }}
-                </button>
-              </article>
-            </div>
-
-            <div v-if="watchActions.length" class="nexora-watch-actions">
+            <div class="nexora-prompt-panel">
               <button
-                v-for="action in watchActions"
-                :key="action.id"
-                class="nexora-watch-pill"
+                v-for="suggestion in assistantUi.quickPrompts"
+                :key="suggestion"
+                class="nexora-chip"
                 type="button"
                 :disabled="voiceSending || loading.plan || loading.execute"
-                @click="sendSuggestion(action.prompt)"
+                @click="sendSuggestion(suggestion)"
               >
-                <strong>{{ action.label }}</strong>
-                <span>{{ action.body }}</span>
+                {{ suggestion }}
               </button>
             </div>
-
-            <div v-if="autopilot.can_manage" class="nexora-autopilot">
-              <div class="nexora-autopilot-head">
-                <div>
-                  <p class="nexora-section-kicker">{{ ui.autopilotKicker }}</p>
-                  <h4>{{ ui.autopilotTitle }}</h4>
-                  <p>{{ ui.autopilotText }}</p>
-                </div>
-                <span v-if="loading.autopilot" class="nexora-watch-badge">{{ ui.autopilotSaving }}</span>
-              </div>
-
-              <div class="nexora-autopilot-grid">
-                <button
-                  v-for="rule in autopilotRules"
-                  :key="rule.key"
-                  class="nexora-rule"
-                  :class="{ active: rule.enabled }"
-                  type="button"
-                  :disabled="loading.autopilot"
-                  @click="toggleAutopilotRule(rule.key)"
-                >
-                  <span class="nexora-rule-toggle">
-                    <span />
-                  </span>
-                  <strong>{{ rule.title }}</strong>
-                  <small>{{ rule.body }}</small>
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <div class="nexora-chip-row">
-            <button
-              v-for="suggestion in ui.quickPrompts"
-              :key="suggestion"
-              class="nexora-chip"
-              type="button"
-              :disabled="voiceSending || loading.plan || loading.execute"
-              @click="sendSuggestion(suggestion)"
-            >
-              {{ suggestion }}
-            </button>
-          </div>
+          </details>
 
           <div class="nexora-manual">
             <div class="nexora-manual-head">
-              <span>{{ ui.composerLabel }}</span>
+              <span>{{ assistantUi.composerLabel }}</span>
               <small>{{ manualHint }}</small>
             </div>
 
@@ -204,7 +120,7 @@
                 ref="draftInput"
                 v-model.trim="draft"
                 class="nexora-input"
-                :placeholder="ui.placeholder"
+                :placeholder="assistantUi.placeholder"
                 rows="2"
                 @keydown.enter.exact.prevent="submitDraft"
               />
@@ -243,6 +159,22 @@
 
                 <p class="nexora-text">{{ item.text }}</p>
 
+                <div
+                  v-if="item.role === 'assistant' && item.plan?.pending?.options?.length"
+                  class="nexora-clarify-options"
+                >
+                  <button
+                    v-for="option in item.plan.pending.options"
+                    :key="`${item.id}-${option.message}`"
+                    class="nexora-clarify-option"
+                    type="button"
+                    :disabled="voiceSending || loading.plan || loading.execute"
+                    @click="sendSuggestion(option.message)"
+                  >
+                    {{ option.label || option.message }}
+                  </button>
+                </div>
+
                 <div v-if="item.plan && item.plan.metrics" class="nexora-metrics">
                   <div class="metric-pill">
                     <span>{{ ui.metricOnline }}</span>
@@ -271,6 +203,20 @@
                     <strong>{{ target.code }}</strong>
                     <span>{{ target.zone }}</span>
                   </div>
+                </div>
+
+                <div v-if="item.role === 'assistant' && item.plan && item.plan.report_file" class="nexora-downloads">
+                  <button
+                    class="nexora-download"
+                    type="button"
+                    :disabled="reportDownloading === item.plan.report_file.filename"
+                    @click="downloadReportFile(item.plan.report_file)"
+                  >
+                    <Icon name="lucide:download" size="16" />
+                    <span>
+                      {{ reportDownloading === item.plan.report_file.filename ? ui.downloadingReport : ui.downloadReport }}
+                    </span>
+                  </button>
                 </div>
 
                 <div
@@ -312,7 +258,7 @@
                 <div class="nexora-card-top">
                   <span class="nexora-role">{{ ui.assistantBadge }}</span>
                 </div>
-                <p class="nexora-text">{{ ui.planning }}</p>
+                <p class="nexora-text">{{ assistantUi.planning }}</p>
               </article>
             </div>
           </div>
@@ -338,11 +284,21 @@ const COPY = {
     subtitle: 'Logoga bosing va buyruqni ayting. Nexora tushunadi, plan tuzadi va kerak bo‘lsa tasdiq so‘raydi.',
     introTitle: 'Nexora buyruq kutmoqda',
     introText: 'Markazdagi Nexora logotipiga bosing va gapiring yoki pastdagi maydonga yozing.',
+    quickPromptsTitle: 'Tayyor buyruqlar',
+    quickPromptsHint: 'Kerak bo‘lsa oching',
     quickPrompts: [
       'Hozir zal holati qanday?',
+      'Bugungi smena haqida ayt.',
+      'Klub bo‘yicha umumiy holatni ayt.',
+      'Joriy smena risklarini tekshir.',
+      'Klub tushumini qanday oshirsak bo‘ladi?',
+      'Mijoz segmentlarini ko‘rsat.',
+      'Shell va PClar holatini tekshir.',
+      'Autopilot nima tavsiya qiladi?',
+      'Owner uchun eng muhim qarorlarni ayt.',
       'Bugungi tushum qancha?',
+      'Klubni bir yillik hisobotini Excel qilib ber.',
       'Offline kompyuterlarni ko‘rsat.',
-      'Barcha yoniq va odam yo‘q kompyuterlarni o‘chir.',
     ],
     operatorBadge: 'Operator',
     assistantBadge: 'Nexora',
@@ -351,32 +307,14 @@ const COPY = {
     metricIdle: 'Bo‘sh',
     metricBooked: 'Bron',
     metricOffline: 'Offline',
-    watchKicker: 'Nexora Watch',
-    watchLoadingTitle: 'Holat yangilanmoqda',
-    watchLoadingText: 'Nexora zal holatini yig‘ib, owner va operator uchun tavsiyalar tayyorlayapti.',
-    watchAlertLabel: 'Ogohlantirish',
-    watchRun: 'Ochish',
-    refreshing: 'Yangilanmoqda...',
-    autopilotKicker: 'Nazoratli autopilot',
-    autopilotTitle: 'Nexora Autopilot',
-    autopilotText: 'Bu yerda xavfsiz qoida va tavsiya rejimlarini boshqarasiz. Xavfli amallar baribir tasdiq bilan qoladi.',
-    autopilotSaving: 'Saqlanmoqda...',
-    autopilotRuleEnabledTitle: 'Autopilot faol',
-    autopilotRuleEnabledBody: 'Nexora Watch doimiy ishlaydi va qoidalarni kuzatadi.',
-    autopilotRuleLockTitle: 'Bo‘sh online PClarni auto-lock',
-    autopilotRuleLockBody: 'Idle online PClar uchun xavfsiz lock commandini Nexora o‘zi yuboradi.',
-    autopilotRuleSuggestIdleTitle: 'Idle shutdown tavsiyalari',
-    autopilotRuleSuggestIdleBody: 'Bo‘sh va yoniq PClar ko‘payganda shutdown planini taklif qiladi.',
-    autopilotRuleSuggestOfflineTitle: 'Offline watch tavsiyalari',
-    autopilotRuleSuggestOfflineBody: 'Offline va uzilgan PClar bo‘yicha proaktiv ogohlantirish beradi.',
     confirm: 'Tasdiqlash',
     cancel: 'Bekor qilish',
-    cancelledPlan: 'Plan bekor qilindi. Hech qanday command yuborilmadi.',
+    cancelledPlan: 'Reja bekor qilindi. Hech qanday buyruq yuborilmadi.',
     executedPlan: 'Plan bajarildi.',
     executing: 'Yuborilmoqda...',
-    planning: 'Nexora holatni tekshirib, action plan tayyorlayapti...',
+    planning: 'Nexora holatni tekshirib, amal rejasini tayyorlayapti...',
     composerLabel: 'Matn bilan yuborish',
-    voiceHint: 'Logoga bosib gapirishingiz mumkin.',
+    voiceHint: 'Logoga bosib audio yozing, Nexora uni aniq transcribe qilib o‘zi yuboradi.',
     voiceListening: 'Tinglayapman...',
     voiceUnsupported: 'Bu brauzer ovozli diktovni qo‘llamaydi.',
     voicePermissionDenied: 'Mikrofonga ruxsat berilmadi.',
@@ -390,13 +328,19 @@ const COPY = {
     statusSendingTitle: 'Yuborilmoqda',
     statusSendingText: 'Nexora yozuvni tayyorlab, buyruqni serverga yuboryapti...',
     statusThinkingTitle: 'Tahlil qilinyapti',
-    statusThinkingText: 'Nexora siz aytgan vazifani tekshirib, bajarish planini tayyorlayapti.',
+    statusThinkingText: 'Nexora siz aytgan vazifani tekshirib, bajarish rejasini tayyorlayapti.',
+    statusSpeakingTitle: 'Nexora javob bermoqda',
+    statusSpeakingText: 'Javob ekranda ham yozildi, hozir ovoz bilan ham aytilyapti.',
     statusDraftTitle: 'Buyruq ushlandi',
     statusDraftText: 'Matn to‘g‘ri bo‘lsa yuboring yoki yana logoga bosib qayta gapiring.',
     statusUnsupportedTitle: 'Matn rejimi',
     statusUnsupportedText: 'Bu brauzerda ovoz ishlamaydi, lekin matn orqali bemalol boshqarsa bo‘ladi.',
     languageLabel: 'Nutq tili',
-    voiceGreeting: 'Salom, men Nexora AI man. Sizga qanday yordam bera olaman?',
+    voiceGreeting: 'Salom, janob. Men Nexora AI man. Sizga qanday yordam bera olaman?',
+    voicePlaybackError: 'Nexora ovozi hozir ishlamadi. OpenAI kaliti sozlanganini tekshiring.',
+    downloadReport: 'Hisobotni yuklab olish',
+    downloadingReport: 'Yuklanmoqda...',
+    downloadError: 'Hisobotni yuklashda xatolik yuz berdi.',
     genericError: 'Nexora bilan gaplashishda xatolik yuz berdi.',
   },
   ru: {
@@ -407,11 +351,21 @@ const COPY = {
     subtitle: 'Нажмите на логотип и скажите команду. Nexora поймет, составит план и попросит подтверждение, если нужно.',
     introTitle: 'Nexora ждет команду',
     introText: 'Нажмите на логотип Nexora в центре и говорите или введите запрос вручную ниже.',
+    quickPromptsTitle: 'Готовые команды',
+    quickPromptsHint: 'Откройте при необходимости',
     quickPrompts: [
       'Какая сейчас ситуация в зале?',
+      'Расскажи про текущую смену.',
+      'Дай общую сводку по клубу.',
+      'Проверь риски текущей смены.',
+      'Как увеличить выручку клуба?',
+      'Покажи сегменты клиентов.',
+      'Проверь состояние оболочки и компьютеров.',
+      'Что рекомендует автопилот Nexora?',
+      'Дай главные решения для владельца.',
       'Какая выручка сегодня?',
+      'Подготовь годовой отчет клуба таблицей.',
       'Покажи офлайн компьютеры.',
-      'Выключи все включенные компьютеры без людей.',
     ],
     operatorBadge: 'Оператор',
     assistantBadge: 'Nexora',
@@ -420,24 +374,6 @@ const COPY = {
     metricIdle: 'Свободно',
     metricBooked: 'Бронь',
     metricOffline: 'Офлайн',
-    watchKicker: 'Nexora Watch',
-    watchLoadingTitle: 'Обновляю состояние',
-    watchLoadingText: 'Nexora собирает ситуацию по залу и готовит подсказки для owner и operator.',
-    watchAlertLabel: 'Сигнал',
-    watchRun: 'Открыть',
-    refreshing: 'Обновляю...',
-    autopilotKicker: 'Контролируемый autopilot',
-    autopilotTitle: 'Nexora Autopilot',
-    autopilotText: 'Здесь управляются безопасные правила и режим подсказок. Опасные действия все равно требуют подтверждения.',
-    autopilotSaving: 'Сохраняю...',
-    autopilotRuleEnabledTitle: 'Autopilot активен',
-    autopilotRuleEnabledBody: 'Nexora Watch постоянно следит за клубом и запускает безопасные правила.',
-    autopilotRuleLockTitle: 'Auto-lock пустых online ПК',
-    autopilotRuleLockBody: 'Для свободных online ПК Nexora сама отправляет безопасную команду lock.',
-    autopilotRuleSuggestIdleTitle: 'Подсказки для idle shutdown',
-    autopilotRuleSuggestIdleBody: 'Когда пустых включенных ПК слишком много, Nexora предлагает plan на shutdown.',
-    autopilotRuleSuggestOfflineTitle: 'Подсказки по offline ПК',
-    autopilotRuleSuggestOfflineBody: 'Показывает proactive alerts по offline и stale машинам.',
     confirm: 'Подтвердить',
     cancel: 'Отмена',
     cancelledPlan: 'План отменен. Команды не отправлены.',
@@ -445,7 +381,7 @@ const COPY = {
     executing: 'Отправка...',
     planning: 'Nexora проверяет состояние и готовит план действий...',
     composerLabel: 'Отправить текстом',
-    voiceHint: 'Можно нажать на логотип и продиктовать команду.',
+    voiceHint: 'Нажмите на логотип, продиктуйте команду, и Nexora сама распознает и отправит ее.',
     voiceListening: 'Слушаю...',
     voiceUnsupported: 'В этом браузере голосовой ввод не поддерживается.',
     voicePermissionDenied: 'Нет доступа к микрофону.',
@@ -453,19 +389,25 @@ const COPY = {
     placeholder: 'Например: выключи все включенные компьютеры без людей',
     send: 'Отправить',
     statusIdleTitle: 'Готов слушать',
-    statusIdleText: 'Нажмите на логотип Nexora и скажите команду естественным языком.',
+    statusIdleText: 'Нажмите на логотип Nexora и скажите команду обычными словами.',
     statusListeningTitle: 'Идет прослушивание',
     statusListeningText: 'Говорите до конца команды. Когда закончите, нажмите на логотип еще раз, и Nexora сама остановит запись и отправит текст.',
     statusSendingTitle: 'Отправляю',
     statusSendingText: 'Nexora подготавливает запись и отправляет команду на сервер...',
     statusThinkingTitle: 'Идет анализ',
     statusThinkingText: 'Nexora проверяет задачу и готовит безопасный план выполнения.',
+    statusSpeakingTitle: 'Nexora отвечает',
+    statusSpeakingText: 'Ответ уже показан на экране, сейчас Nexora озвучивает его.',
     statusDraftTitle: 'Команда распознана',
     statusDraftText: 'Если текст верный, отправьте его или нажмите на логотип и продиктуйте заново.',
     statusUnsupportedTitle: 'Текстовый режим',
     statusUnsupportedText: 'Голос здесь недоступен, но вы можете управлять Nexora через текст.',
     languageLabel: 'Язык речи',
-    voiceGreeting: 'Здравствуйте, я Nexora AI. Чем могу помочь?',
+    voiceGreeting: 'Здравствуйте. Я Nexora. Чем могу помочь?',
+    voicePlaybackError: 'Голос Nexora сейчас не сработал. Проверьте ключ OpenAI.',
+    downloadReport: 'Скачать отчет',
+    downloadingReport: 'Скачивание...',
+    downloadError: 'Не удалось скачать отчет.',
     genericError: 'Не удалось выполнить запрос к Nexora.',
   },
   en: {
@@ -476,11 +418,21 @@ const COPY = {
     subtitle: 'Press the logo and speak. Nexora understands the request, prepares a plan, and asks for confirmation when needed.',
     introTitle: 'Nexora is ready',
     introText: 'Press the centered Nexora logo and speak, or type a command below.',
+    quickPromptsTitle: 'Ready commands',
+    quickPromptsHint: 'Open only if needed',
     quickPrompts: [
       'What is the current hall status?',
+      'Tell me about the current shift.',
+      'Give me a full club overview.',
+      'Check current shift risks.',
+      'How can we increase club revenue?',
+      'Show client segments.',
+      'Check the shell client and computer status.',
+      'What does Nexora Autopilot recommend?',
+      'Give the main owner decisions.',
       'What is today revenue?',
+      'Prepare the annual club report in Excel.',
       'Show offline computers.',
-      'Shut down all powered-on PCs without active users.',
     ],
     operatorBadge: 'Operator',
     assistantBadge: 'Nexora',
@@ -489,24 +441,6 @@ const COPY = {
     metricIdle: 'Idle',
     metricBooked: 'Booked',
     metricOffline: 'Offline',
-    watchKicker: 'Nexora Watch',
-    watchLoadingTitle: 'Refreshing status',
-    watchLoadingText: 'Nexora is gathering room signals and preparing suggestions for the owner and operator.',
-    watchAlertLabel: 'Alert',
-    watchRun: 'Open',
-    refreshing: 'Refreshing...',
-    autopilotKicker: 'Controlled autopilot',
-    autopilotTitle: 'Nexora Autopilot',
-    autopilotText: 'Manage safe rules and suggestion modes here. Risky actions still stay behind confirmation.',
-    autopilotSaving: 'Saving...',
-    autopilotRuleEnabledTitle: 'Autopilot enabled',
-    autopilotRuleEnabledBody: 'Nexora Watch keeps observing the club and running safe rules.',
-    autopilotRuleLockTitle: 'Auto-lock idle online PCs',
-    autopilotRuleLockBody: 'Nexora can send a safe lock command for idle online PCs on its own.',
-    autopilotRuleSuggestIdleTitle: 'Idle shutdown suggestions',
-    autopilotRuleSuggestIdleBody: 'When too many powered-on PCs are idle, Nexora proposes a shutdown plan.',
-    autopilotRuleSuggestOfflineTitle: 'Offline watch suggestions',
-    autopilotRuleSuggestOfflineBody: 'Show proactive alerts for offline and stale machines.',
     confirm: 'Confirm',
     cancel: 'Cancel',
     cancelledPlan: 'Plan dismissed. No commands were sent.',
@@ -514,7 +448,7 @@ const COPY = {
     executing: 'Sending...',
     planning: 'Nexora is checking the hall and preparing the action plan...',
     composerLabel: 'Send with text',
-    voiceHint: 'Press the logo to dictate a command.',
+    voiceHint: 'Press the logo, record your voice, and Nexora will transcribe and send it.',
     voiceListening: 'Listening...',
     voiceUnsupported: 'Voice dictation is not supported in this browser.',
     voicePermissionDenied: 'Microphone permission was denied.',
@@ -529,47 +463,39 @@ const COPY = {
     statusSendingText: 'Nexora is preparing the transcript and sending your command...',
     statusThinkingTitle: 'Analyzing request',
     statusThinkingText: 'Nexora is reviewing the request and preparing a safe execution plan.',
+    statusSpeakingTitle: 'Nexora is speaking',
+    statusSpeakingText: 'The answer is already on screen, and Nexora is reading it aloud.',
     statusDraftTitle: 'Command captured',
     statusDraftText: 'If the text looks right, send it now or press the logo again to speak again.',
     statusUnsupportedTitle: 'Text mode',
     statusUnsupportedText: 'Voice is unavailable here, but Nexora can still be controlled with text.',
     languageLabel: 'Speech language',
     voiceGreeting: 'Hello, I am Nexora AI. How can I help you today?',
+    voicePlaybackError: 'AI voice did not work. Please check the OpenAI API key.',
+    downloadReport: 'Download report',
+    downloadingReport: 'Downloading...',
+    downloadError: 'Could not download the report.',
     genericError: 'There was an error while talking to Nexora.',
   },
 }
 
 const assistantLogo = '/brand/nexora-assistant-logo.png'
 
-function defaultAutopilotState() {
-  return {
-    enabled: false,
-    auto_lock_idle_online: false,
-    suggest_idle_shutdown: true,
-    suggest_offline_watch: true,
-    can_manage: false,
-  }
-}
-
 const open = ref(false)
 const draft = ref('')
 const thread = ref([])
-const watchData = ref(null)
-const autopilot = ref(defaultAutopilotState())
+const conversationId = ref('')
 const threadRef = ref(null)
 const draftInput = ref(null)
 const loading = ref({
   plan: false,
   execute: false,
-  overview: false,
-  autopilot: false,
 })
 const activePlanId = ref('')
+const reportDownloading = ref('')
 const recognizing = ref(false)
 const voiceError = ref('')
-const recognitionRef = ref(null)
 const voiceCaptured = ref(false)
-const voiceShouldContinue = ref(false)
 const voiceSubmitOnStop = ref(false)
 const voiceSending = ref(false)
 const speechLocale = ref(resolveSpeechLocale(locale.value))
@@ -578,76 +504,57 @@ const speechLocaleOptions = computed(() => [
   { value: 'ru-RU', label: 'RU' },
   { value: 'en-US', label: 'EN' },
 ])
-let speechFinalTranscript = ''
-let recognitionRestartTimer = null
+const voiceLocaleCode = computed(() => localeCodeFromSpeech(speechLocale.value))
 let voiceSubmitTimer = null
 const speakingAudio = ref(false)
 let activeAudio = null
 let activeAudioUrl = ''
 let audioRequestToken = 0
+let activeAudioContext = null
+let activeAudioSource = null
+let mediaRecorder = null
+let mediaStream = null
+let recordedChunks = []
 
 const ui = computed(() => COPY[locale.value] || COPY.uz)
-const watchSummary = computed(() => watchData.value?.summary || null)
-const watchMetrics = computed(() => watchData.value?.metrics || null)
-const watchAlerts = computed(() => Array.isArray(watchData.value?.alerts) ? watchData.value.alerts : [])
-const watchActions = computed(() => Array.isArray(watchData.value?.suggested_actions) ? watchData.value.suggested_actions : [])
-const autopilotRules = computed(() => [
-  {
-    key: 'enabled',
-    enabled: Boolean(autopilot.value.enabled),
-    title: ui.value.autopilotRuleEnabledTitle,
-    body: ui.value.autopilotRuleEnabledBody,
-  },
-  {
-    key: 'auto_lock_idle_online',
-    enabled: Boolean(autopilot.value.auto_lock_idle_online),
-    title: ui.value.autopilotRuleLockTitle,
-    body: ui.value.autopilotRuleLockBody,
-  },
-  {
-    key: 'suggest_idle_shutdown',
-    enabled: Boolean(autopilot.value.suggest_idle_shutdown),
-    title: ui.value.autopilotRuleSuggestIdleTitle,
-    body: ui.value.autopilotRuleSuggestIdleBody,
-  },
-  {
-    key: 'suggest_offline_watch',
-    enabled: Boolean(autopilot.value.suggest_offline_watch),
-    title: ui.value.autopilotRuleSuggestOfflineTitle,
-    body: ui.value.autopilotRuleSuggestOfflineBody,
-  },
-])
+const assistantUi = computed(() => COPY[voiceLocaleCode.value] || ui.value)
 
 const speechSupported = computed(() => {
   if (!import.meta.client) return false
-  return typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+  return (
+    typeof navigator !== 'undefined' &&
+    Boolean(navigator.mediaDevices?.getUserMedia) &&
+    typeof MediaRecorder !== 'undefined'
+  )
 })
 
 const statusTitle = computed(() => {
-  if (voiceSending.value) return ui.value.statusSendingTitle
-  if (loading.value.plan || loading.value.execute) return ui.value.statusThinkingTitle
-  if (recognizing.value) return ui.value.statusListeningTitle
-  if (!speechSupported.value) return ui.value.statusUnsupportedTitle
-  if (draft.value) return ui.value.statusDraftTitle
-  return ui.value.statusIdleTitle
+  if (voiceSending.value) return assistantUi.value.statusSendingTitle
+  if (loading.value.plan || loading.value.execute) return assistantUi.value.statusThinkingTitle
+  if (speakingAudio.value) return assistantUi.value.statusSpeakingTitle
+  if (recognizing.value) return assistantUi.value.statusListeningTitle
+  if (!speechSupported.value) return assistantUi.value.statusUnsupportedTitle
+  if (draft.value) return assistantUi.value.statusDraftTitle
+  return assistantUi.value.statusIdleTitle
 })
 
 const statusText = computed(() => {
-  if (voiceSending.value) return ui.value.statusSendingText
-  if (loading.value.plan || loading.value.execute) return ui.value.statusThinkingText
-  if (recognizing.value) return ui.value.statusListeningText
+  if (voiceSending.value) return assistantUi.value.statusSendingText
+  if (loading.value.plan || loading.value.execute) return assistantUi.value.statusThinkingText
+  if (speakingAudio.value) return assistantUi.value.statusSpeakingText
+  if (recognizing.value) return assistantUi.value.statusListeningText
   if (voiceError.value) return voiceError.value
-  if (!speechSupported.value) return ui.value.statusUnsupportedText
-  if (draft.value) return ui.value.statusDraftText
-  return ui.value.statusIdleText
+  if (!speechSupported.value) return assistantUi.value.statusUnsupportedText
+  if (draft.value) return assistantUi.value.statusDraftText
+  return assistantUi.value.statusIdleText
 })
 
 const manualHint = computed(() => {
-  if (voiceSending.value) return ui.value.executing
+  if (voiceSending.value) return assistantUi.value.executing
   if (voiceError.value) return voiceError.value
-  if (recognizing.value) return ui.value.voiceListening
-  if (!speechSupported.value) return ui.value.voiceUnsupported
-  return ui.value.voiceHint
+  if (recognizing.value) return assistantUi.value.voiceListening
+  if (!speechSupported.value) return assistantUi.value.voiceUnsupported
+  return assistantUi.value.voiceHint
 })
 
 watch(
@@ -671,9 +578,6 @@ watch(
   () => locale.value,
   (value) => {
     speechLocale.value = resolveSpeechLocale(value)
-    if (open.value) {
-      void loadOverview()
-    }
   },
 )
 
@@ -681,9 +585,9 @@ function openAssistant() {
   open.value = true
   voiceError.value = ''
   voiceSending.value = false
+  unlockAudioPlayback()
   if (thread.value.length === 0) resetThread()
-  void loadOverview()
-  void playAssistantVoice(ui.value.voiceGreeting)
+  void playAssistantVoice(assistantUi.value.voiceGreeting)
 }
 
 function closeAssistant() {
@@ -696,67 +600,7 @@ function closeAssistant() {
 
 function resetThread() {
   thread.value = []
-}
-
-function syncOverview(payload) {
-  watchData.value = payload || null
-  autopilot.value = {
-    ...defaultAutopilotState(),
-    ...(payload?.autopilot || {}),
-  }
-}
-
-async function loadOverview() {
-  if (!open.value) return
-
-  loading.value.overview = true
-  try {
-    const { data } = await cpApi.nexoraOverview({ locale: locale.value })
-    syncOverview(data?.data || null)
-  } catch {
-    watchData.value = null
-  } finally {
-    loading.value.overview = false
-  }
-}
-
-async function toggleAutopilotRule(key) {
-  if (!autopilot.value.can_manage || loading.value.autopilot) return
-
-  const next = {
-    enabled: Boolean(autopilot.value.enabled),
-    auto_lock_idle_online: Boolean(autopilot.value.auto_lock_idle_online),
-    suggest_idle_shutdown: Boolean(autopilot.value.suggest_idle_shutdown),
-    suggest_offline_watch: Boolean(autopilot.value.suggest_offline_watch),
-    [key]: !Boolean(autopilot.value[key]),
-  }
-
-  loading.value.autopilot = true
-
-  try {
-    const { data } = await cpApi.nexoraAutopilot({
-      ...next,
-      locale: locale.value,
-    })
-
-    const payload = data?.data || {}
-    autopilot.value = {
-      ...autopilot.value,
-      ...(payload.autopilot || {}),
-      can_manage: true,
-    }
-
-    const assistantMessage = String(payload.assistant_message || ui.value.genericError)
-    thread.value.push(createMessage('assistant', assistantMessage))
-    void playAssistantVoice(assistantMessage)
-    await loadOverview()
-  } catch (error) {
-    const messageText = extractError(error)
-    thread.value.push(createMessage('assistant', messageText))
-    void playAssistantVoice(messageText)
-  } finally {
-    loading.value.autopilot = false
-  }
+  conversationId.value = ''
 }
 
 function createMessage(role, text, extra = {}) {
@@ -824,30 +668,38 @@ async function submitDraft() {
   loading.value.plan = true
 
   try {
-    const { data } = await cpApi.nexoraPlan({
+    const payload = {
       message,
-      locale: locale.value,
-    })
+      locale: voiceLocaleCode.value,
+    }
+    if (conversationId.value) {
+      payload.conversation_id = conversationId.value
+    }
+
+    const { data } = await cpApi.nexoraPlan(payload)
 
     const plan = data?.data || {}
+    if (plan.conversation_id) {
+      conversationId.value = String(plan.conversation_id)
+    }
 
-    const assistantMessage = String(plan.assistant_message || ui.value.genericError)
+    const assistantMessage = String(plan.assistant_message || assistantUi.value.genericError)
+    const assistantVoiceText = String(plan.voice_text || assistantMessage)
 
     thread.value.push(
-      createMessage('assistant', String(plan.assistant_message || ui.value.genericError), {
+      createMessage('assistant', assistantMessage, {
         plan,
         planState: plan.confirmation_required ? 'pending' : 'done',
         suggestions: Array.isArray(plan.suggestions) ? plan.suggestions : [],
       }),
     )
-    void playAssistantVoice(assistantMessage)
+    void playAssistantVoice(assistantVoiceText)
   } catch (error) {
     const messageText = extractError(error)
     thread.value.push(createMessage('assistant', messageText))
     void playAssistantVoice(messageText)
   } finally {
     loading.value.plan = false
-    void loadOverview()
   }
 }
 
@@ -861,15 +713,17 @@ async function executePlan(item) {
     const { data } = await cpApi.nexoraExecute({
       plan_id: item.plan.plan_id,
       confirmed: true,
-      locale: locale.value,
+      approval_token: item.plan.approval?.token || item.plan.approval_token || '',
+      locale: voiceLocaleCode.value,
     })
 
     item.planState = 'executed'
 
     const result = data?.data || {}
-    const assistantMessage = String(result.assistant_message || ui.value.genericError)
+    const assistantMessage = String(result.assistant_message || assistantUi.value.genericError)
+    const assistantVoiceText = String(result.voice_text || assistantMessage)
     thread.value.push(createMessage('assistant', assistantMessage))
-    void playAssistantVoice(assistantMessage)
+    void playAssistantVoice(assistantVoiceText)
   } catch (error) {
     const messageText = extractError(error)
     thread.value.push(createMessage('assistant', messageText))
@@ -877,13 +731,43 @@ async function executePlan(item) {
   } finally {
     loading.value.execute = false
     activePlanId.value = ''
-    void loadOverview()
   }
 }
 
 function dismissPlan(item) {
   if (!item) return
   item.planState = 'cancelled'
+}
+
+async function downloadReportFile(file) {
+  const filename = String(file?.filename || '').trim()
+  if (!filename || reportDownloading.value) return
+
+  reportDownloading.value = filename
+
+  try {
+    const response = await cpApi.nexoraDownloadReport(filename)
+    const blob = response?.data instanceof Blob
+      ? response.data
+      : new Blob([response?.data], {
+          type: file?.content_type || response?.headers?.['content-type'] || 'application/octet-stream',
+        })
+
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = filename
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  } catch {
+    const messageText = assistantUi.value.downloadError
+    thread.value.push(createMessage('assistant', messageText))
+    void playAssistantVoice(messageText)
+  } finally {
+    reportDownloading.value = ''
+  }
 }
 
 function extractError(error) {
@@ -898,7 +782,7 @@ function extractError(error) {
     }
   }
 
-  return ui.value.genericError
+  return assistantUi.value.genericError
 }
 
 function toggleVoice() {
@@ -912,6 +796,7 @@ function toggleVoice() {
 }
 
 function startRecognition() {
+  if (mediaRecorder || voiceSending.value || loading.value.plan || loading.value.execute) return
   stopPlayback()
   beginRecognition(true)
 }
@@ -920,13 +805,13 @@ async function playAssistantVoice(text) {
   const content = String(text || '').trim()
   if (!import.meta.client || !open.value || content === '') return
 
-  const requestToken = ++audioRequestToken
   stopPlayback()
+  const requestToken = ++audioRequestToken
 
   try {
     const response = await cpApi.nexoraSpeak({
       text: content,
-      locale: locale.value,
+      locale: voiceLocaleCode.value,
     })
 
     if (requestToken !== audioRequestToken || !open.value) {
@@ -938,6 +823,11 @@ async function playAssistantVoice(text) {
       : new Blob([response?.data], {
           type: response?.headers?.['content-type'] || 'audio/mpeg',
         })
+
+    const playedWithWebAudio = await playBlobWithWebAudio(blob, requestToken)
+    if (playedWithWebAudio) {
+      return
+    }
 
     activeAudioUrl = URL.createObjectURL(blob)
     activeAudio = new Audio(activeAudioUrl)
@@ -954,11 +844,22 @@ async function playAssistantVoice(text) {
     await activeAudio.play()
   } catch {
     stopPlayback()
+    voiceError.value = assistantUi.value.voicePlaybackError
   }
 }
 
 function stopPlayback() {
   audioRequestToken += 1
+
+  if (activeAudioSource) {
+    try {
+      activeAudioSource.stop()
+    } catch {
+      // Ignore already-stopped WebAudio sources.
+    }
+    activeAudioSource.onended = null
+    activeAudioSource = null
+  }
 
   if (activeAudio) {
     try {
@@ -980,127 +881,213 @@ function stopPlayback() {
   speakingAudio.value = false
 }
 
-function beginRecognition(resetDraft = false) {
-  if (!import.meta.client || !speechSupported.value) return
-
-  clearRecognitionRestart()
-  voiceError.value = ''
-  voiceSubmitOnStop.value = false
-  voiceSending.value = false
-  voiceShouldContinue.value = true
-  if (resetDraft) {
-    voiceCaptured.value = false
-    draft.value = ''
-    speechFinalTranscript = ''
+function unlockAudioPlayback() {
+  if (!import.meta.client || typeof window === 'undefined') return
+  if (activeAudioContext) {
+    if (activeAudioContext.state === 'suspended') {
+      activeAudioContext.resume().catch(() => {})
+    }
+    return
   }
 
-  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition
-  if (!Recognition) return
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext
+  if (!AudioContextCtor) return
 
-  const recognition = new Recognition()
-  recognition.lang = speechLocale.value
-  recognition.interimResults = true
-  recognition.continuous = true
-  recognition.maxAlternatives = 1
-
-  recognition.onstart = () => {
-    recognizing.value = true
+  activeAudioContext = new AudioContextCtor()
+  if (activeAudioContext.state === 'suspended') {
+    activeAudioContext.resume().catch(() => {})
   }
+}
 
-  recognition.onresult = (event) => {
-    let finalChunk = ''
-    let interimChunk = ''
+async function playBlobWithWebAudio(blob, requestToken) {
+  if (!import.meta.client || !blob?.size) return false
 
-    for (let index = event.resultIndex; index < event.results.length; index += 1) {
-      const piece = `${event.results[index][0]?.transcript || ''} `.trim()
-      if (!piece) continue
-      if (event.results[index].isFinal) {
-        finalChunk += `${piece} `
-      } else {
-        interimChunk += `${piece} `
+  unlockAudioPlayback()
+  if (!activeAudioContext) return false
+
+  try {
+    if (activeAudioContext.state === 'suspended') {
+      await activeAudioContext.resume()
+    }
+
+    const buffer = await blob.arrayBuffer()
+    const audioBuffer = await activeAudioContext.decodeAudioData(buffer)
+
+    if (requestToken !== audioRequestToken || !open.value) {
+      return true
+    }
+
+    const source = activeAudioContext.createBufferSource()
+    source.buffer = audioBuffer
+    source.connect(activeAudioContext.destination)
+    source.onended = () => {
+      if (activeAudioSource === source) {
+        activeAudioSource = null
+        speakingAudio.value = false
       }
     }
 
-    if (finalChunk) {
-      speechFinalTranscript = `${speechFinalTranscript} ${finalChunk}`.trim()
-    }
+    activeAudioSource = source
+    speakingAudio.value = true
+    source.start(0)
 
-    draft.value = `${speechFinalTranscript} ${interimChunk}`.trim()
-    voiceCaptured.value = draft.value.length > 0
+    return true
+  } catch {
+    return false
   }
-
-  recognition.onerror = (event) => {
-    if (event?.error === 'aborted' || event?.error === 'no-speech') {
-      return
-    }
-
-    voiceShouldContinue.value = false
-    voiceSubmitOnStop.value = false
-    voiceSending.value = false
-    if (event?.error === 'not-allowed' || event?.error === 'service-not-allowed') {
-      voiceError.value = ui.value.voicePermissionDenied
-    } else {
-      voiceError.value = ui.value.voiceError
-    }
-  }
-
-  recognition.onend = () => {
-    recognizing.value = false
-    recognitionRef.value = null
-
-    const shouldSubmit =
-      voiceSubmitOnStop.value &&
-      open.value &&
-      !loading.value.plan &&
-      !loading.value.execute &&
-      String(draft.value || '').trim() !== ''
-
-    voiceSubmitOnStop.value = false
-
-    if (voiceShouldContinue.value && open.value && !loading.value.plan && !loading.value.execute) {
-      recognitionRestartTimer = setTimeout(() => {
-        beginRecognition(false)
-      }, 120)
-      return
-    }
-
-    if (shouldSubmit) {
-      scheduleVoiceSubmit()
-    }
-  }
-
-  recognitionRef.value = recognition
-  recognition.start()
 }
 
-function clearRecognitionRestart() {
-  if (recognitionRestartTimer) {
-    clearTimeout(recognitionRestartTimer)
-    recognitionRestartTimer = null
+async function beginRecognition(resetDraft = false) {
+  if (!import.meta.client || !speechSupported.value) return
+
+  voiceError.value = ''
+  voiceSubmitOnStop.value = false
+  voiceSending.value = false
+  if (resetDraft) {
+    voiceCaptured.value = false
+    draft.value = ''
+  }
+
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    })
+
+    const mimeType = resolveRecorderMimeType()
+    mediaRecorder = mimeType
+      ? new MediaRecorder(mediaStream, { mimeType })
+      : new MediaRecorder(mediaStream)
+    recordedChunks = []
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data?.size) {
+        recordedChunks.push(event.data)
+        voiceCaptured.value = true
+      }
+    }
+
+    mediaRecorder.onerror = () => {
+      voiceError.value = assistantUi.value.voiceError
+      voiceSending.value = false
+      recognizing.value = false
+      voiceSubmitOnStop.value = false
+      stopMediaStream()
+    }
+
+    mediaRecorder.onstop = async () => {
+      const shouldSubmit = Boolean(voiceSubmitOnStop.value)
+      const chunks = [...recordedChunks]
+      const recorderType = mediaRecorder?.mimeType || mimeType || 'audio/webm'
+
+      mediaRecorder = null
+      recordedChunks = []
+      recognizing.value = false
+      voiceSubmitOnStop.value = false
+      stopMediaStream()
+
+      if (!shouldSubmit || !open.value || chunks.length === 0) {
+        return
+      }
+
+      const blob = new Blob(chunks, { type: recorderType })
+      await transcribeAndSubmit(blob, recorderType)
+    }
+
+    mediaRecorder.start()
+    recognizing.value = true
+  } catch {
+    voiceError.value = assistantUi.value.voicePermissionDenied
+    voiceSending.value = false
+    recognizing.value = false
+    voiceSubmitOnStop.value = false
+    stopMediaStream()
   }
 }
 
 function stopRecognition(userInitiated = false, options = {}) {
-  if (userInitiated) {
-    voiceShouldContinue.value = false
-  }
   voiceSubmitOnStop.value = Boolean(options.submitOnStop)
-  clearRecognitionRestart()
   if (!voiceSubmitOnStop.value) {
     clearVoiceSubmitDelay()
     voiceSending.value = false
   }
-  if (recognitionRef.value) {
-    recognitionRef.value.stop()
-    recognitionRef.value = null
+
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop()
+    return
   }
+
+  mediaRecorder = null
+  recordedChunks = []
   recognizing.value = false
+  stopMediaStream()
+}
+
+async function transcribeAndSubmit(blob, mimeType) {
+  if (!blob?.size || voiceSending.value || loading.value.plan || loading.value.execute) return
+
+  voiceSending.value = true
+  voiceError.value = ''
+
+  try {
+    const extension = audioExtensionForMime(mimeType)
+    const formData = new FormData()
+    formData.append('locale', voiceLocaleCode.value)
+    formData.append('audio', new File([blob], `nexora-command-${Date.now()}.${extension}`, { type: mimeType || 'audio/webm' }))
+
+    const { data } = await cpApi.nexoraTranscribe(formData)
+    const text = String(data?.data?.text || '').trim()
+
+    if (!text) {
+      voiceError.value = assistantUi.value.voiceError
+      return
+    }
+
+    draft.value = text
+    voiceCaptured.value = true
+    voiceSending.value = false
+    await nextTick()
+    await submitDraft()
+  } catch (error) {
+    voiceError.value = extractError(error)
+  } finally {
+    voiceSending.value = false
+  }
+}
+
+function resolveRecorderMimeType() {
+  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']
+  if (typeof MediaRecorder === 'undefined') return ''
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || ''
+}
+
+function audioExtensionForMime(type) {
+  if (String(type || '').includes('mp4')) return 'm4a'
+  if (String(type || '').includes('ogg')) return 'ogg'
+  if (String(type || '').includes('mpeg')) return 'mp3'
+  if (String(type || '').includes('wav')) return 'wav'
+  return 'webm'
+}
+
+function stopMediaStream() {
+  if (!mediaStream) return
+  mediaStream.getTracks().forEach((track) => track.stop())
+  mediaStream = null
 }
 
 function resolveSpeechLocale(code) {
   if (code === 'ru') return 'ru-RU'
   if (code === 'en') return 'en-US'
   return 'uz-UZ'
+}
+
+function localeCodeFromSpeech(code) {
+  if (String(code || '').startsWith('ru')) return 'ru'
+  if (String(code || '').startsWith('en')) return 'en'
+  return 'uz'
 }
 
 function scrollThread() {
@@ -1350,6 +1337,18 @@ onBeforeUnmount(() => {
   animation-delay: var(--bar-delay);
 }
 
+.nexora-core.speaking .ring-one,
+.nexora-core.speaking .ring-two {
+  border-color: rgba(142, 255, 203, 0.32);
+  animation: nexoraPulse 1.9s ease-in-out infinite;
+}
+
+.nexora-core.speaking .nexora-core-glow {
+  background:
+    radial-gradient(circle at center, rgba(142, 255, 203, 0.22) 0%, rgba(55, 232, 255, 0.1) 46%, transparent 74%),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.1), transparent 56%);
+}
+
 .nexora-core.unsupported {
   opacity: 0.8;
 }
@@ -1449,238 +1448,6 @@ onBeforeUnmount(() => {
   color: var(--text);
 }
 
-.nexora-watch-shell {
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 26px;
-  border: 1px solid rgba(55, 232, 255, 0.12);
-  background:
-    radial-gradient(circle at top, rgba(55, 232, 255, 0.08), transparent 52%),
-    rgba(255, 255, 255, 0.03);
-}
-
-.nexora-watch-head,
-.nexora-autopilot-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.nexora-watch-head h4,
-.nexora-autopilot-head h4 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.nexora-watch-head p,
-.nexora-autopilot-head p {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.nexora-section-kicker {
-  margin: 0 0 6px;
-  color: #8af7ff;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.nexora-watch-badge {
-  min-height: 30px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(55, 232, 255, 0.16);
-  background: rgba(55, 232, 255, 0.08);
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.nexora-watch-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.watch-metric {
-  display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.watch-metric span {
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.watch-metric strong {
-  font-size: 22px;
-}
-
-.nexora-watch-grid,
-.nexora-autopilot-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.nexora-watch-card,
-.nexora-rule {
-  display: grid;
-  gap: 10px;
-  padding: 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
-  text-align: left;
-}
-
-.nexora-watch-card.severity-warning {
-  border-color: rgba(255, 189, 89, 0.2);
-  background: rgba(255, 189, 89, 0.06);
-}
-
-.nexora-watch-card.severity-critical {
-  border-color: rgba(255, 115, 115, 0.22);
-  background: rgba(255, 115, 115, 0.06);
-}
-
-.nexora-watch-card-top {
-  display: grid;
-  gap: 6px;
-}
-
-.nexora-watch-tag {
-  justify-self: flex-start;
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-faint);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.nexora-watch-card strong,
-.nexora-rule strong {
-  font-size: 15px;
-}
-
-.nexora-watch-card p,
-.nexora-rule small {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.nexora-watch-action {
-  justify-self: flex-start;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(55, 232, 255, 0.16);
-  background: rgba(55, 232, 255, 0.1);
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.nexora-watch-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.nexora-watch-pill {
-  min-width: min(100%, 220px);
-  flex: 1 1 200px;
-  display: grid;
-  gap: 4px;
-  padding: 13px 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
-  text-align: left;
-}
-
-.nexora-watch-pill strong {
-  font-size: 13px;
-}
-
-.nexora-watch-pill span {
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.nexora-autopilot {
-  display: grid;
-  gap: 12px;
-  padding-top: 4px;
-}
-
-.nexora-rule {
-  position: relative;
-  padding-left: 62px;
-}
-
-.nexora-rule-toggle {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  width: 34px;
-  height: 20px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: background 160ms ease;
-}
-
-.nexora-rule-toggle span {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  transition: transform 160ms ease;
-}
-
-.nexora-rule.active {
-  border-color: rgba(55, 232, 255, 0.18);
-  background: rgba(55, 232, 255, 0.08);
-}
-
-.nexora-rule.active .nexora-rule-toggle {
-  background: rgba(55, 232, 255, 0.28);
-}
-
-.nexora-rule.active .nexora-rule-toggle span {
-  transform: translateX(14px);
-}
-
 .nexora-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -1690,6 +1457,72 @@ onBeforeUnmount(() => {
 
 .nexora-chip-row.compact {
   justify-content: flex-start;
+}
+
+.nexora-prompt-drawer {
+  border: 1px solid rgba(55, 232, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+  overflow: hidden;
+}
+
+.nexora-prompt-summary {
+  min-height: 46px;
+  padding: 0 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text);
+  user-select: none;
+}
+
+.nexora-prompt-summary::-webkit-details-marker {
+  display: none;
+}
+
+.nexora-prompt-summary span {
+  min-width: 0;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nexora-prompt-summary strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nexora-prompt-summary small {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.nexora-prompt-chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.nexora-prompt-drawer[open] .nexora-prompt-chevron {
+  color: #7ee8ff;
+  transform: rotate(180deg);
+}
+
+.nexora-prompt-panel {
+  max-height: 150px;
+  padding: 0 12px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px;
+  overflow: auto;
 }
 
 .nexora-chip {
@@ -1865,6 +1698,31 @@ onBeforeUnmount(() => {
   color: var(--text);
 }
 
+.nexora-clarify-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nexora-clarify-option {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(142, 255, 203, 0.2);
+  background:
+    radial-gradient(100% 160% at 0% 0%, rgba(142, 255, 203, 0.16), transparent 58%),
+    rgba(55, 232, 255, 0.07);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
+}
+
+.nexora-clarify-option:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .nexora-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1913,6 +1771,31 @@ onBeforeUnmount(() => {
 .target-pill span {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.nexora-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nexora-download {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 16px;
+  border: 1px solid rgba(94, 234, 212, 0.32);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(94, 234, 212, 0.2), rgba(55, 232, 255, 0.12));
+  color: var(--text);
+  font-weight: 900;
+}
+
+.nexora-download:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .nexora-confirm {
@@ -2057,24 +1940,20 @@ onBeforeUnmount(() => {
     height: 124px;
   }
 
-  .nexora-watch-head,
-  .nexora-autopilot-head {
-    display: grid;
-  }
-
   .nexora-composer,
   .nexora-manual-head,
   .nexora-confirm,
-  .nexora-metrics,
-  .nexora-watch-metrics,
-  .nexora-watch-grid,
-  .nexora-autopilot-grid {
+  .nexora-metrics {
     grid-template-columns: minmax(0, 1fr);
     display: grid;
   }
 
-  .nexora-rule {
-    padding-left: 58px;
+  .nexora-prompt-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .nexora-prompt-summary small {
+    display: none;
   }
 
   .nexora-send {

@@ -117,6 +117,7 @@ const iconMap = {
   Present: 'solar:gift-linear',
   RefreshLeft: 'solar:refresh-linear',
   Setting: 'solar:settings-linear',
+  Sparkles: 'solar:magic-stick-3-linear',
   Ticket: 'solar:ticket-sale-linear',
   User: 'solar:user-linear',
   VideoPlay: 'solar:gameboy-linear',

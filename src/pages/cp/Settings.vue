@@ -369,6 +369,214 @@
       </div>
     </section>
 
+    <section class="card-flat panel staff-panel">
+      <div class="staff-head">
+        <div>
+          <h2 class="section-title">
+            <span class="title-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM16.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" fill="currentColor" opacity="0.35"/>
+                <path d="M2 20a6 6 0 0 1 12 0v1H2v-1zM14.5 21v-1a7.5 7.5 0 0 0-1.35-4.3A5 5 0 0 1 22 19v2h-7.5z" fill="currentColor"/>
+              </svg>
+            </span>
+            Jamoa va ish haqi
+          </h2>
+          <p class="hint">Owner bu yerda operator/admin qo‘shadi, stavka belgilaydi va ishlagan kunlar bo‘yicha hisobni ko‘radi.</p>
+        </div>
+        <button class="btn ghost" type="button" :disabled="operatorsLoading || payrollLoading" @click="loadStaffData">
+          {{ operatorsLoading || payrollLoading ? "Yangilanmoqda..." : "Jamoani yangilash" }}
+        </button>
+      </div>
+
+      <div class="staff-layout">
+        <form class="staff-create" @submit.prevent="createOperator">
+          <div class="staff-card-title">Yangi xodim</div>
+          <div class="staff-create-grid">
+            <label class="field">
+              <span>Ism</span>
+              <input v-model="operatorForm.name" class="input" placeholder="Masalan: Aziz" />
+            </label>
+            <label class="field">
+              <span>Login</span>
+              <input v-model="operatorForm.login" class="input" placeholder="aziz.operator" />
+            </label>
+            <label class="field">
+              <span>Parol</span>
+              <input v-model="operatorForm.password" class="input" type="password" placeholder="Kamida 4 belgi" />
+            </label>
+            <label class="field">
+              <span>Rol</span>
+              <select v-model="operatorForm.role" class="input">
+                <option value="operator">Operator</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Ish haqi turi</span>
+              <select v-model="operatorForm.salaryType" class="input">
+                <option value="daily">Kunlik</option>
+                <option value="monthly">Oylik</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Stavka</span>
+              <input v-model.number="operatorForm.salaryAmount" class="input" type="number" min="0" step="1000" placeholder="0" />
+            </label>
+          </div>
+          <button class="btn primary staff-submit" type="submit" :disabled="operatorSaving">
+            {{ operatorSaving ? "Qo‘shilmoqda..." : "Operator/Admin qo‘shish" }}
+          </button>
+        </form>
+
+        <div class="staff-payroll">
+          <div class="staff-payroll-top">
+            <div>
+              <div class="staff-card-title">Hisob-kitob</div>
+              <p class="hint">Kunlik stavka ishlagan kunlarga ko‘payadi, oylik stavka oy uchun hisoblanadi.</p>
+            </div>
+            <div class="payroll-filter">
+              <label class="field compact">
+                <span>Dan</span>
+                <input v-model="payrollFilter.from" class="input" type="date" />
+              </label>
+              <label class="field compact">
+                <span>Gacha</span>
+                <input v-model="payrollFilter.to" class="input" type="date" />
+              </label>
+              <button class="btn ghost" type="button" :disabled="payrollLoading" @click="loadPayroll">
+                Hisoblash
+              </button>
+            </div>
+          </div>
+          <div class="payroll-metrics">
+            <div class="payroll-metric">
+              <span>To‘lanadi</span>
+              <strong>{{ money(payroll?.summary?.net_payable_total || 0) }}</strong>
+            </div>
+            <div class="payroll-metric">
+              <span>Jarima</span>
+              <strong>{{ money(payroll?.summary?.penalty_total || 0) }}</strong>
+            </div>
+            <div class="payroll-metric">
+              <span>Ishlagan kun</span>
+              <strong>{{ payroll?.summary?.worked_days_total || 0 }}</strong>
+            </div>
+          </div>
+
+          <div class="payroll-tools">
+            <div class="staff-card-title">Bonus / jarima / avans</div>
+            <div class="payroll-action-grid">
+              <label class="field">
+                <span>Xodim</span>
+                <select v-model.number="payrollAction.operatorId" class="input">
+                  <option :value="0">Tanlang</option>
+                  <option v-for="staff in staffOperators" :key="`adj-${staff.id}`" :value="staff.id">
+                    {{ staff.name }}
+                  </option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Turi</span>
+                <select v-model="payrollAction.type" class="input">
+                  <option value="bonus">Bonus</option>
+                  <option value="penalty">Jarima</option>
+                  <option value="advance">Avans</option>
+                  <option value="correction">Tuzatish</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Summa</span>
+                <input v-model.number="payrollAction.amount" class="input" type="number" step="1000" />
+              </label>
+              <label class="field">
+                <span>Sana</span>
+                <input v-model="payrollAction.date" class="input" type="date" />
+              </label>
+            </div>
+            <label class="field">
+              <span>Izoh</span>
+              <input v-model="payrollAction.note" class="input" placeholder="Masalan: yaxshi smena uchun bonus" />
+            </label>
+            <div class="payroll-tool-actions">
+              <button class="btn primary" type="button" :disabled="payrollBusy" @click="createPayrollAdjustment">
+                Qo‘shish
+              </button>
+              <button class="btn ghost" type="button" :disabled="payrollBusy" @click="generatePayrollPeriod">
+                Payroll period yaratish
+              </button>
+              <button class="btn ghost" type="button" :disabled="payrollBusy" @click="exportPayrollXlsx">
+                Excel yuklash
+              </button>
+              <button class="btn ghost" type="button" :disabled="payrollBusy" @click="exportPayrollPdf">
+                PDF yuklash
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="payrollPeriods.length" class="payroll-periods">
+        <div class="staff-card-title">Payroll periodlar</div>
+        <div v-for="period in payrollPeriods.slice(0, 3)" :key="period.id" class="period-row">
+          <div>
+            <strong>{{ period.name }}</strong>
+            <span>{{ period.period_from }} - {{ period.period_to }} · {{ period.status }}</span>
+          </div>
+          <div class="period-money">{{ money(period.net_total || 0) }}</div>
+          <div class="period-actions">
+            <button v-if="period.status === 'draft'" class="btn ghost" type="button" :disabled="payrollBusy" @click="approvePayrollPeriod(period.id)">
+              Tasdiqlash
+            </button>
+            <button v-if="period.status === 'approved'" class="btn ghost" type="button" :disabled="payrollBusy" @click="markPayrollPeriodPaid(period.id)">
+              To‘landi
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="staff-list">
+        <div v-if="operatorsLoading" class="staff-empty">Jamoa yuklanmoqda...</div>
+        <div v-else-if="!staffOperators.length" class="staff-empty">Hali operator yoki admin qo‘shilmagan.</div>
+        <template v-else>
+          <div v-for="staff in staffOperators" :key="staff.id" class="staff-row">
+            <div class="staff-person">
+              <div class="staff-avatar">{{ initials(staff.name) }}</div>
+              <div>
+                <strong>{{ staff.name }}</strong>
+                <span>{{ roleLabel(staff.role) }} · {{ staff.login }} · {{ staff.is_active ? 'Faol' : 'O‘chirilgan' }}</span>
+              </div>
+            </div>
+            <label class="field staff-inline-field">
+              <span>Turi</span>
+              <select v-model="staff.salary_type" class="input">
+                <option value="daily">Kunlik</option>
+                <option value="monthly">Oylik</option>
+              </select>
+            </label>
+            <label class="field staff-inline-field">
+              <span>Stavka</span>
+              <input v-model.number="staff.salary_amount" class="input" type="number" min="0" step="1000" />
+            </label>
+            <div class="staff-payline">
+              <span>{{ payrollLine(staff.id)?.worked_days || 0 }} kun</span>
+              <strong>{{ money(payrollLine(staff.id)?.net_payable_amount || 0) }}</strong>
+            </div>
+            <div class="staff-row-actions">
+              <button class="btn ghost" type="button" :disabled="savingOperatorId === staff.id" @click="saveStaffSalary(staff)">
+                Saqlash
+              </button>
+              <button class="btn ghost" type="button" :disabled="savingOperatorId === staff.id" @click="markTodayAttendance(staff)">
+                Bugun ishladi
+              </button>
+              <button class="btn ghost" type="button" :disabled="savingOperatorId === staff.id" @click="toggleStaff(staff)">
+                {{ staff.is_active ? "O‘chirish" : "Faollashtirish" }}
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
     <section class="actions">
       <button class="btn primary" :disabled="saving" @click="saveSettings">
         <span class="btn-icon">
@@ -448,6 +656,37 @@ const shellUploading = ref(false)
 const showAutoShiftModal = ref(false)
 const autoShiftDraftCount = ref(2)
 const autoShiftSnapshot = ref(null)
+const operatorsLoading = ref(false)
+const operatorSaving = ref(false)
+const payrollLoading = ref(false)
+const payrollBusy = ref(false)
+const savingOperatorId = ref(null)
+const operators = ref([])
+const payroll = ref(null)
+const payrollPeriods = ref([])
+const payrollAdjustments = ref([])
+
+const operatorForm = reactive({
+  name: '',
+  login: '',
+  password: '',
+  role: 'operator',
+  salaryType: 'daily',
+  salaryAmount: 0,
+})
+
+const payrollFilter = reactive({
+  from: monthDate('start'),
+  to: monthDate('end'),
+})
+
+const payrollAction = reactive({
+  operatorId: 0,
+  type: 'bonus',
+  amount: 0,
+  date: todayDate(),
+  note: '',
+})
 
 const form = reactive({
   clubName: '',
@@ -484,6 +723,63 @@ const promoFileName = computed(() => (promoFile.value ? promoFile.value.name : '
 const agentFileName = computed(() => (agentFile.value ? agentFile.value.name : ''))
 const clientFileName = computed(() => (clientFile.value ? clientFile.value.name : ''))
 const shellFileName = computed(() => (shellFile.value ? shellFile.value.name : ''))
+const staffOperators = computed(() => (
+  Array.isArray(operators.value)
+    ? operators.value.filter((item) => ['operator', 'admin'].includes(String(item?.role || '')))
+    : []
+))
+
+function monthDate(edge) {
+  const d = new Date()
+  const target = edge === 'start'
+    ? new Date(d.getFullYear(), d.getMonth(), 1)
+    : new Date(d.getFullYear(), d.getMonth() + 1, 0)
+  const year = target.getFullYear()
+  const month = String(target.getMonth() + 1).padStart(2, '0')
+  const day = String(target.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function todayDate() {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function money(value) {
+  return `${Number(value || 0).toLocaleString('ru-RU')} UZS`
+}
+
+function initials(value) {
+  const parts = String(value || 'N')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+  return (parts[0]?.[0] || 'N').toUpperCase() + (parts[1]?.[0] || '').toUpperCase()
+}
+
+function roleLabel(role) {
+  if (role === 'admin') return 'Admin'
+  if (role === 'operator') return 'Operator'
+  return 'Owner'
+}
+
+function payrollLine(operatorId) {
+  const rows = payroll.value?.operators
+  if (!Array.isArray(rows)) return null
+  return rows.find((row) => Number(row?.operator?.id) === Number(operatorId)) || null
+}
+
+function resetOperatorForm() {
+  operatorForm.name = ''
+  operatorForm.login = ''
+  operatorForm.password = ''
+  operatorForm.role = 'operator'
+  operatorForm.salaryType = 'daily'
+  operatorForm.salaryAmount = 0
+}
 
 function getYoutubeId(raw) {
   try {
@@ -704,6 +1000,295 @@ async function loadSettings() {
     error.value = e?.response?.data?.message || "Settings yuklanmadi"
   } finally {
     loading.value = false
+  }
+}
+
+async function loadOperators() {
+  operatorsLoading.value = true
+  try {
+    const { data } = await cpApi.operators()
+    operators.value = Array.isArray(data?.data) ? data.data : []
+  } catch (e) {
+    const status = e?.response?.status
+    if (status !== 403) {
+      error.value = e?.response?.data?.message || 'Jamoa yuklanmadi'
+    }
+    operators.value = []
+  } finally {
+    operatorsLoading.value = false
+  }
+}
+
+async function loadPayroll() {
+  payrollLoading.value = true
+  try {
+    const { data } = await cpApi.operatorPayroll({
+      from: payrollFilter.from,
+      to: payrollFilter.to,
+    })
+    payroll.value = data?.data || null
+  } catch (e) {
+    const status = e?.response?.status
+    if (status !== 403) {
+      error.value = e?.response?.data?.message || 'Ish haqi hisoblanmadi'
+    }
+    payroll.value = null
+  } finally {
+    payrollLoading.value = false
+  }
+}
+
+async function loadPayrollMeta() {
+  try {
+    const [periodsResponse, adjustmentsResponse] = await Promise.all([
+      cpApi.payrollPeriods(),
+      cpApi.payrollAdjustments({
+        from: payrollFilter.from,
+        to: payrollFilter.to,
+      }),
+    ])
+    payrollPeriods.value = Array.isArray(periodsResponse?.data?.data) ? periodsResponse.data.data : []
+    payrollAdjustments.value = Array.isArray(adjustmentsResponse?.data?.data) ? adjustmentsResponse.data.data : []
+  } catch (e) {
+    const status = e?.response?.status
+    if (status !== 403) {
+      error.value = e?.response?.data?.message || 'Payroll ma’lumotlari yuklanmadi'
+    }
+    payrollPeriods.value = []
+    payrollAdjustments.value = []
+  }
+}
+
+async function loadStaffData() {
+  await Promise.all([loadOperators(), loadPayroll(), loadPayrollMeta()])
+}
+
+async function createOperator() {
+  if (operatorSaving.value) return
+  error.value = ''
+  message.value = ''
+  const payload = {
+    name: String(operatorForm.name || '').trim(),
+    login: String(operatorForm.login || '').trim(),
+    password: String(operatorForm.password || ''),
+    role: operatorForm.role,
+    salary_type: operatorForm.salaryType,
+    salary_amount: Math.max(0, Number(operatorForm.salaryAmount || 0)),
+  }
+
+  if (!payload.name || !payload.login || payload.password.length < 4) {
+    error.value = 'Ism, login va kamida 4 belgili parol kiriting'
+    return
+  }
+
+  operatorSaving.value = true
+  try {
+    await cpApi.operatorCreate(payload)
+    message.value = 'Xodim qo‘shildi'
+    resetOperatorForm()
+    await loadStaffData()
+  } catch (e) {
+    const firstErr = e?.response?.data?.errors
+      ? Object.values(e.response.data.errors).flat()[0]
+      : null
+    error.value = firstErr || e?.response?.data?.message || 'Xodim qo‘shilmadi'
+  } finally {
+    operatorSaving.value = false
+  }
+}
+
+async function saveStaffSalary(staff) {
+  if (!staff?.id || savingOperatorId.value) return
+  savingOperatorId.value = staff.id
+  error.value = ''
+  message.value = ''
+  try {
+    await cpApi.operatorUpdate(staff.id, {
+      salary_type: staff.salary_type,
+      salary_amount: Math.max(0, Number(staff.salary_amount || 0)),
+    })
+    message.value = 'Ish haqi saqlandi'
+    await loadStaffData()
+  } catch (e) {
+    const firstErr = e?.response?.data?.errors
+      ? Object.values(e.response.data.errors).flat()[0]
+      : null
+    error.value = firstErr || e?.response?.data?.message || 'Ish haqi saqlanmadi'
+  } finally {
+    savingOperatorId.value = null
+  }
+}
+
+async function toggleStaff(staff) {
+  if (!staff?.id || savingOperatorId.value) return
+  savingOperatorId.value = staff.id
+  error.value = ''
+  message.value = ''
+  try {
+    await cpApi.operatorUpdate(staff.id, {
+      is_active: !staff.is_active,
+    })
+    message.value = staff.is_active ? 'Xodim o‘chirildi' : 'Xodim faollashtirildi'
+    await loadOperators()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Status o‘zgarmadi'
+  } finally {
+    savingOperatorId.value = null
+  }
+}
+
+async function markTodayAttendance(staff) {
+  if (!staff?.id || savingOperatorId.value) return
+  savingOperatorId.value = staff.id
+  error.value = ''
+  message.value = ''
+  try {
+    await cpApi.operatorAttendanceSave({
+      operator_id: staff.id,
+      work_date: todayDate(),
+      status: 'present',
+      minutes_worked: 0,
+      note: 'Owner settings orqali belgilandi',
+    })
+    message.value = 'Davomat belgilandi'
+    await loadStaffData()
+  } catch (e) {
+    const firstErr = e?.response?.data?.errors
+      ? Object.values(e.response.data.errors).flat()[0]
+      : null
+    error.value = firstErr || e?.response?.data?.message || 'Davomat saqlanmadi'
+  } finally {
+    savingOperatorId.value = null
+  }
+}
+
+async function createPayrollAdjustment() {
+  if (payrollBusy.value) return
+  error.value = ''
+  message.value = ''
+  if (!payrollAction.operatorId || !Number(payrollAction.amount || 0)) {
+    error.value = 'Xodim va summani kiriting'
+    return
+  }
+  payrollBusy.value = true
+  try {
+    await cpApi.payrollAdjustmentCreate({
+      operator_id: payrollAction.operatorId,
+      type: payrollAction.type,
+      amount: Number(payrollAction.amount || 0),
+      effective_date: payrollAction.date || todayDate(),
+      note: String(payrollAction.note || '').trim() || null,
+    })
+    payrollAction.amount = 0
+    payrollAction.note = ''
+    message.value = 'Payroll tuzatish qo‘shildi'
+    await loadStaffData()
+  } catch (e) {
+    const firstErr = e?.response?.data?.errors
+      ? Object.values(e.response.data.errors).flat()[0]
+      : null
+    error.value = firstErr || e?.response?.data?.message || 'Tuzatish qo‘shilmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function generatePayrollPeriod() {
+  if (payrollBusy.value) return
+  payrollBusy.value = true
+  error.value = ''
+  message.value = ''
+  try {
+    await cpApi.payrollPeriodCreate({
+      name: `Payroll ${payrollFilter.from} - ${payrollFilter.to}`,
+      from: payrollFilter.from,
+      to: payrollFilter.to,
+    })
+    message.value = 'Payroll period yaratildi'
+    await loadStaffData()
+  } catch (e) {
+    const firstErr = e?.response?.data?.errors
+      ? Object.values(e.response.data.errors).flat()[0]
+      : null
+    error.value = firstErr || e?.response?.data?.message || 'Period yaratilmay qoldi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function approvePayrollPeriod(id) {
+  if (!id || payrollBusy.value) return
+  payrollBusy.value = true
+  try {
+    await cpApi.payrollPeriodApprove(id)
+    message.value = 'Payroll tasdiqlandi'
+    await loadPayrollMeta()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Tasdiqlanmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function markPayrollPeriodPaid(id) {
+  if (!id || payrollBusy.value) return
+  payrollBusy.value = true
+  try {
+    await cpApi.payrollPeriodMarkPaid(id)
+    message.value = 'Payroll to‘landi deb belgilandi'
+    await loadPayrollMeta()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'To‘landi belgisi qo‘yilmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function exportPayrollXlsx() {
+  if (payrollBusy.value) return
+  payrollBusy.value = true
+  error.value = ''
+  try {
+    const { data } = await cpApi.payrollExportXlsx({
+      from: payrollFilter.from,
+      to: payrollFilter.to,
+    })
+    const url = window.URL.createObjectURL(data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `operator-payroll-${payrollFilter.from}-${payrollFilter.to}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Excel yuklanmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function exportPayrollPdf() {
+  if (payrollBusy.value) return
+  payrollBusy.value = true
+  error.value = ''
+  try {
+    const { data } = await cpApi.payrollExportPdf({
+      from: payrollFilter.from,
+      to: payrollFilter.to,
+    })
+    const url = window.URL.createObjectURL(data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `operator-payroll-${payrollFilter.from}-${payrollFilter.to}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'PDF yuklanmadi'
+  } finally {
+    payrollBusy.value = false
   }
 }
 
@@ -998,7 +1583,10 @@ async function saveSettings() {
   }
 }
 
-onMounted(loadSettings)
+onMounted(() => {
+  loadSettings()
+  loadStaffData()
+})
 </script>
 
 <style scoped>
@@ -1303,6 +1891,246 @@ onMounted(loadSettings)
   overflow: hidden;
 }
 
+.staff-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.staff-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.staff-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.95fr) minmax(360px, 1.05fr);
+  gap: 14px;
+}
+
+.staff-create,
+.staff-payroll,
+.staff-row,
+.staff-empty {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background:
+    radial-gradient(260px 160px at 10% 0%, rgba(45, 212, 191, 0.12), transparent 65%),
+    rgba(3, 7, 18, 0.38);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.staff-create,
+.staff-payroll {
+  padding: 14px;
+}
+
+.staff-card-title {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: rgba(103, 232, 249, 0.95);
+}
+
+.staff-create-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.staff-submit {
+  margin-top: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.staff-payroll-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.payroll-filter {
+  display: grid;
+  grid-template-columns: 128px 128px auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.field.compact {
+  gap: 4px;
+}
+
+.payroll-metrics {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.payroll-metric {
+  min-height: 92px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(103, 232, 249, 0.16);
+  background: linear-gradient(145deg, rgba(8, 20, 30, 0.82), rgba(8, 12, 26, 0.72));
+  display: grid;
+  align-content: space-between;
+}
+
+.payroll-metric span,
+.staff-payline span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.payroll-metric strong {
+  font-size: 22px;
+}
+
+.payroll-tools {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  gap: 10px;
+}
+
+.payroll-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.payroll-tool-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.payroll-periods {
+  border: 1px solid rgba(103, 232, 249, 0.16);
+  border-radius: 18px;
+  padding: 14px;
+  background:
+    radial-gradient(360px 180px at 80% 0%, rgba(45, 212, 191, 0.12), transparent 70%),
+    rgba(3, 7, 18, 0.32);
+  display: grid;
+  gap: 10px;
+}
+
+.period-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.period-row strong,
+.period-row span {
+  display: block;
+}
+
+.period-row span {
+  margin-top: 4px;
+  color: rgba(148, 163, 184, 0.95);
+  font-size: 12px;
+}
+
+.period-money {
+  color: rgba(134, 239, 172, 0.98);
+  font-size: 17px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.period-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.staff-list {
+  display: grid;
+  gap: 10px;
+}
+
+.staff-empty {
+  padding: 18px;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.staff-row {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) 140px 150px 130px auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.staff-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.staff-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #08111f;
+  font-weight: 900;
+  background: linear-gradient(135deg, rgba(212, 175, 106, 0.92), rgba(103, 232, 249, 0.92));
+}
+
+.staff-person strong,
+.staff-person span {
+  display: block;
+  min-width: 0;
+}
+
+.staff-person span {
+  margin-top: 3px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.staff-inline-field span {
+  font-size: 10px;
+}
+
+.staff-payline {
+  display: grid;
+  gap: 3px;
+}
+
+.staff-payline strong {
+  font-size: 16px;
+}
+
+.staff-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1448,6 +2276,26 @@ onMounted(loadSettings)
   }
   .cols-auto-shift {
     grid-template-columns: 36px 1fr 90px 90px;
+  }
+  .staff-head,
+  .staff-payroll-top {
+    display: grid;
+  }
+  .staff-layout,
+  .staff-create-grid,
+  .payroll-metrics,
+  .payroll-action-grid,
+  .period-row {
+    grid-template-columns: 1fr;
+  }
+  .payroll-filter {
+    grid-template-columns: 1fr;
+  }
+  .staff-row {
+    grid-template-columns: 1fr;
+  }
+  .staff-row-actions {
+    justify-content: flex-start;
   }
 }
 </style>

@@ -25,6 +25,7 @@ export const cpNavigationGroups = [
     titleKey: 'layout.nav.management',
     items: [
       { to: '/cp/reports', labelKey: 'layout.menu.reports', icon: 'DataAnalysis', roles: ['admin', 'owner'] },
+      { to: '/cp/nexora-control', labelKey: 'layout.menu.nexoraControl', icon: 'Sparkles', roles: ['owner'], features: ['nexora_ai'] },
       { to: '/cp/install-center', labelKey: 'layout.menu.installCenter', icon: 'Download', roles: ['admin', 'owner'] },
       { to: '/cp/shell-games', labelKey: 'layout.menu.shellGames', icon: 'VideoPlay', roles: ['admin', 'owner'] },
       { to: '/cp/promotions', labelKey: 'layout.menu.promotions', icon: 'Present', roles: ['admin', 'owner'] },

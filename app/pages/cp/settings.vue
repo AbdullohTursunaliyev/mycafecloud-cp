@@ -1,6 +1,6 @@
 <template>
   <div class="settings-page">
-    <CpPageHero eyebrow="Club profile" title="Settings" subtitle="Klub sozlamalari, media va installer konfiguratsiyasini alohida bo‘limlar bilan boshqaring.">
+    <CpPageHero eyebrow="Klub profili" title="Sozlamalar" subtitle="Klub ma’lumotlari, media, o‘rnatish fayllari va jamoani bitta joydan boshqaring.">
       <template #meta>
         <span class="hero-meta-badge">
           <Icon name="lucide:clock-3" size="14" />
@@ -8,7 +8,7 @@
         </span>
         <span class="hero-meta-badge">
           <Icon name="lucide:badge-check" size="14" />
-          Tayyor bo‘limlar: {{ readySections }}/7
+          Tayyor bo‘limlar: {{ readySections }}/8
         </span>
       </template>
 
@@ -20,13 +20,6 @@
       </template>
     </CpPageHero>
 
-    <div class="stats-grid">
-      <CpStatCard compact tone="tone-blue" label="Club" :value="clubReady ? 'Tayyor' : 'Bo‘sh'" :hint="form.clubName || 'Klub nomi yo‘q'" />
-      <CpStatCard compact tone="tone-green" label="Media" :value="mediaReady ? 'Tayyor' : 'Bo‘sh'" :hint="promoPreviewType ? 'Preview tayyor' : 'Promo yo‘q'" />
-      <CpStatCard compact tone="tone-amber" label="Installers" :value="String(installersReadyCount)" hint="Client / Agent / Shell" />
-      <CpStatCard compact tone="tone-rose" label="Auto shift" :value="form.autoShiftEnabled ? String(form.autoShiftSlots.length) : '0'" :hint="form.autoShiftEnabled ? 'Jadval yoqilgan' : 'O‘chiq'" />
-    </div>
-
     <div class="tab-strip">
       <button
         v-for="tab in tabs"
@@ -34,7 +27,7 @@
         type="button"
         class="tab-btn"
         :class="{ active: activeTab === tab.key }"
-        @click="activeTab = tab.key"
+        @click="selectTab(tab.key)"
       >
         <Icon :name="tab.icon" size="16" />
         <span>{{ tab.label }}</span>
@@ -46,7 +39,7 @@
 
     <template v-if="activeTab === 'club'">
       <div class="content-grid">
-        <CpPanelCard title="Club" subtitle="Klub nomi va logo">
+        <CpPanelCard title="Klub" subtitle="Klub nomi va logotipi">
           <div class="form-grid">
             <label class="field field-span-2">
               <span>Klub nomi</span>
@@ -55,13 +48,13 @@
           </div>
         </CpPanelCard>
 
-        <CpPanelCard title="Logo" subtitle="Klub kartasi va login ekrani uchun">
+        <CpPanelCard title="Logotip" subtitle="Klub kartasi va kirish ekrani uchun">
           <div class="logo-layout">
             <div class="logo-preview">
-              <img v-if="form.clubLogo" :src="form.clubLogo" alt="club logo" />
+              <img v-if="form.clubLogo" :src="form.clubLogo" alt="Klub logotipi" />
               <div v-else class="empty-preview">
                 <Icon name="lucide:image-off" size="18" />
-                <span>Logo yo‘q</span>
+                <span>Logotip yo‘q</span>
               </div>
             </div>
 
@@ -82,14 +75,14 @@
 
     <template v-else-if="activeTab === 'media'">
       <div class="content-grid">
-        <CpPanelCard title="Media" subtitle="Login sahifa promo videosi">
+        <CpPanelCard title="Media" subtitle="Kirish sahifasida ko‘rinadigan reklama videosi">
           <div class="form-grid">
             <label class="field field-span-2">
-              <span>Promo video URL</span>
+              <span>Reklama videosi havolasi</span>
               <input v-model.trim="form.promoVideoUrl" placeholder="https://cdn.domain.com/promo.mp4" />
             </label>
             <label class="field field-span-2">
-              <span>Promo fayl yuklash (MP4/WebM/GIF)</span>
+              <span>Reklama videosini yuklash (MP4/WebM/GIF)</span>
               <input ref="promoFileInput" class="file-input" type="file" accept="video/mp4,video/webm,image/gif" @change="onPromoFileSelected" />
             </label>
           </div>
@@ -97,20 +90,20 @@
           <div class="inline-actions">
             <button class="primary-btn" type="button" :disabled="promoUploading || !promoFile" @click="uploadPromoFile">
               <Icon name="lucide:upload" size="14" />
-              <span>{{ promoUploading ? 'Yuklanmoqda...' : 'Promo yuklash' }}</span>
+              <span>{{ promoUploading ? 'Yuklanmoqda...' : 'Reklama videosini yuklash' }}</span>
             </button>
             <span v-if="promoFileName" class="helper-chip">{{ promoFileName }}</span>
           </div>
         </CpPanelCard>
 
-        <CpPanelCard title="Preview" subtitle="Video yoki YouTube preview">
+        <CpPanelCard title="Oldindan ko‘rish" subtitle="Video yoki YouTube ko‘rinishi">
           <div class="video-shell">
-            <img v-if="promoPreviewType === 'gif'" :src="promoPreviewUrl" alt="promo preview" />
+            <img v-if="promoPreviewType === 'gif'" :src="promoPreviewUrl" alt="Reklama videosi ko‘rinishi" />
             <video v-else-if="promoPreviewType === 'video'" :src="promoPreviewUrl" muted autoplay loop playsinline></video>
             <iframe v-else-if="promoPreviewType === 'youtube'" :src="promoPreviewUrl" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
             <div v-else class="empty-preview wide">
               <Icon name="lucide:monitor-play" size="20" />
-              <span>Preview mavjud emas</span>
+              <span>Oldindan ko‘rish mavjud emas</span>
             </div>
           </div>
         </CpPanelCard>
@@ -119,77 +112,77 @@
 
     <template v-else-if="activeTab === 'installers'">
       <div class="content-grid">
-        <CpPanelCard title="Client + Agent" subtitle="One-liner install uchun URL va args">
+        <CpPanelCard title="Kompyuter ilovasi va agent" subtitle="Kompyuterga o‘rnatish uchun fayl havolasi va parametrlar.">
           <div class="form-grid">
             <label class="field field-span-2">
-              <span>Client installer URL</span>
+              <span>Kompyuter ilovasi havolasi</span>
               <input v-model.trim="form.clientInstallerUrl" placeholder="https://cdn.domain.com/client-setup.exe" />
             </label>
             <label class="field field-span-2">
-              <span>Client fayl yuklash (EXE/MSI/ZIP)</span>
+              <span>Kompyuter ilovasi faylini yuklash (EXE/MSI/ZIP)</span>
               <input ref="clientFileInput" class="file-input" type="file" accept=".exe,.msi,.zip" @change="onClientFileSelected" />
             </label>
             <div class="inline-actions field-span-2">
               <button class="primary-btn" type="button" :disabled="clientUploading || !clientFile" @click="uploadClientFile">
                 <Icon name="lucide:upload" size="14" />
-                <span>{{ clientUploading ? 'Yuklanmoqda...' : 'Client yuklash' }}</span>
+                <span>{{ clientUploading ? 'Yuklanmoqda...' : 'Kompyuter ilovasi faylini yuklash' }}</span>
               </button>
               <span v-if="clientFileName" class="helper-chip">{{ clientFileName }}</span>
             </div>
             <label class="field field-span-2">
-              <span>Client install args</span>
+              <span>Kompyuter ilovasi o‘rnatish parametrlari</span>
               <input v-model.trim="form.clientInstallArgs" placeholder='--install SERVER_URL="{SERVER}" PAIR_CODE="{PAIR_CODE}"' />
             </label>
 
             <label class="field field-span-2">
-              <span>Agent installer URL</span>
+              <span>Agent dasturi havolasi</span>
               <input v-model.trim="form.agentInstallerUrl" placeholder="https://cdn.domain.com/agent-setup.exe" />
             </label>
             <label class="field field-span-2">
-              <span>Agent fayl yuklash (EXE/MSI/ZIP)</span>
+              <span>Agent faylini yuklash (EXE/MSI/ZIP)</span>
               <input ref="agentFileInput" class="file-input" type="file" accept=".exe,.msi,.zip" @change="onAgentFileSelected" />
             </label>
             <div class="inline-actions field-span-2">
               <button class="primary-btn" type="button" :disabled="agentUploading || !agentFile" @click="uploadAgentFile">
                 <Icon name="lucide:upload" size="14" />
-                <span>{{ agentUploading ? 'Yuklanmoqda...' : 'Agent yuklash' }}</span>
+                <span>{{ agentUploading ? 'Yuklanmoqda...' : 'Agent faylini yuklash' }}</span>
               </button>
               <span v-if="agentFileName" class="helper-chip">{{ agentFileName }}</span>
             </div>
             <label class="field">
-              <span>Agent install args</span>
+              <span>Agent o‘rnatish parametrlari</span>
               <input v-model.trim="form.agentInstallArgs" placeholder='/quiet SERVER_URL="{SERVER}" PAIR_CODE="{PAIR_CODE}"' />
             </label>
             <label class="field">
-              <span>Agent SHA256</span>
+              <span>Agent nazorat xeshi</span>
               <input v-model.trim="form.agentHash" readonly />
             </label>
           </div>
         </CpPanelCard>
 
-        <CpPanelCard title="Shell installer" subtitle="Shell URL, upload va hash">
+        <CpPanelCard title="Shell dasturi" subtitle="Shell fayli, o‘rnatish parametrlari va nazorat xeshi.">
           <div class="form-grid">
             <label class="field field-span-2">
-              <span>Shell installer URL</span>
+              <span>Shell dasturi havolasi</span>
               <input v-model.trim="form.shellInstallerUrl" placeholder="https://cdn.domain.com/shell-setup.exe" />
             </label>
             <label class="field field-span-2">
-              <span>Shell fayl yuklash (EXE/MSI/ZIP)</span>
+              <span>Shell faylini yuklash (EXE/MSI/ZIP)</span>
               <input ref="shellFileInput" class="file-input" type="file" accept=".exe,.msi,.zip" @change="onShellFileSelected" />
             </label>
             <div class="inline-actions field-span-2">
               <button class="primary-btn" type="button" :disabled="shellUploading || !shellFile" @click="uploadShellFile">
                 <Icon name="lucide:upload" size="14" />
-                <span>{{ shellUploading ? 'Yuklanmoqda...' : 'Shell yuklash' }}</span>
+                <span>{{ shellUploading ? 'Yuklanmoqda...' : 'Shell faylini yuklash' }}</span>
               </button>
               <span v-if="shellFileName" class="helper-chip">{{ shellFileName }}</span>
             </div>
             <label class="field">
-              <span>Shell install args</span>
+              <span>Shell o‘rnatish parametrlari</span>
               <input v-model.trim="form.shellInstallArgs" placeholder='/quiet SERVER_URL="{SERVER}"' />
             </label>
             <label class="field">
-              <span>Shell SHA256</span>
+              <span>Shell nazorat xeshi</span>
               <input v-model.trim="form.shellHash" readonly />
             </label>
           </div>
@@ -199,44 +192,44 @@
 
     <template v-else-if="activeTab === 'shell'">
       <div class="content-grid">
-        <CpPanelCard title="Shell autostart" subtitle="Windows start bo‘lganda ochiladi">
+        <CpPanelCard title="Shell avtomatik ochilishi" subtitle="Windows ishga tushganda Shell ham avtomatik ochiladi.">
           <label class="check-line">
             <input v-model="form.shellAutostartEnabled" type="checkbox" />
-            <span>Autostart yoqilgan</span>
+            <span>Avtomatik ochilish yoqilgan</span>
           </label>
 
           <div class="form-grid">
             <label class="field field-span-2">
-              <span>Shell EXE path</span>
+              <span>Shell dasturi joylashuvi</span>
               <input v-model.trim="form.shellAutostartPath" placeholder="C:\Program Files\NexoraCloud\NexoraCloud.exe" />
             </label>
             <label class="field">
-              <span>Shell args</span>
+              <span>Shell parametrlari</span>
               <input v-model.trim="form.shellAutostartArgs" placeholder="--kiosk" />
             </label>
             <label class="field">
-              <span>Scope</span>
+              <span>Qo‘llanish sohasi</span>
               <select v-model="form.shellAutostartScope">
-                <option value="machine">Machine (HKLM)</option>
-                <option value="user">User (HKCU)</option>
+                <option value="machine">Barcha foydalanuvchilar (HKLM)</option>
+                <option value="user">Joriy foydalanuvchi (HKCU)</option>
               </select>
             </label>
           </div>
         </CpPanelCard>
 
-        <CpPanelCard title="Kiosk mode" subtitle="Explorer o‘rniga shell ishlatish">
+        <CpPanelCard title="Kiosk rejimi" subtitle="Windows Explorer o‘rniga Shell dasturini ishga tushirish.">
           <label class="check-line danger">
             <input v-model="form.shellReplaceEnabled" type="checkbox" />
-            <span>Explorer o‘rniga shell</span>
+            <span>Explorer o‘rniga Shell ishlasin</span>
           </label>
 
           <div class="form-grid">
             <label class="field field-span-2">
-              <span>Shell EXE path</span>
+              <span>Shell dasturi joylashuvi</span>
               <input v-model.trim="form.shellReplacePath" placeholder="C:\Program Files\NexoraCloud\NexoraCloud.exe" />
             </label>
             <label class="field field-span-2">
-              <span>Shell args</span>
+              <span>Shell parametrlari</span>
               <input v-model.trim="form.shellReplaceArgs" placeholder="--kiosk" />
             </label>
           </div>
@@ -246,18 +239,18 @@
 
     <template v-else-if="activeTab === 'location'">
       <div class="content-grid">
-        <CpPanelCard title="Location" subtitle="Manzil va xarita preview">
+        <CpPanelCard title="Manzil" subtitle="Klub joylashuvi va xarita ko‘rinishi">
           <div class="form-grid">
             <label class="field field-span-2">
               <span>Manzil</span>
               <input v-model.trim="form.address" placeholder="Toshkent, Chilonzor..." />
             </label>
             <label class="field">
-              <span>Latitude</span>
+              <span>Kenglik</span>
               <input v-model.trim="form.lat" placeholder="41.2995" />
             </label>
             <label class="field">
-              <span>Longitude</span>
+              <span>Uzunlik</span>
               <input v-model.trim="form.lng" placeholder="69.2401" />
             </label>
           </div>
@@ -274,13 +267,13 @@
           </div>
         </CpPanelCard>
 
-        <CpPanelCard title="Map preview" subtitle="Koordinatalar asosida">
+        <CpPanelCard title="Xarita ko‘rinishi" subtitle="Kiritilgan koordinatalar asosida">
           <div v-if="mapEmbedUrl" class="map-shell">
             <iframe :src="mapEmbedUrl" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
           </div>
           <div v-else class="empty-preview wide">
             <Icon name="lucide:map-off" size="18" />
-            <span>Map preview uchun lat/lng kiriting</span>
+            <span>Xarita ko‘rinishi uchun kenglik va uzunlikni kiriting</span>
           </div>
         </CpPanelCard>
       </div>
@@ -290,15 +283,15 @@
       <CpPanelCard title="Telegram" subtitle="Smena xabarlari va bot konfiguratsiyasi">
         <div class="form-grid">
           <label class="field field-span-2">
-            <span>Telegram bot token</span>
+            <span>Telegram bot kaliti</span>
             <input v-model.trim="form.telegramBotToken" type="password" placeholder="123456:ABC-DEF..." />
           </label>
           <label class="field">
-            <span>Telegram user</span>
+            <span>Telegram foydalanuvchi yoki ID</span>
             <input v-model.trim="form.telegramUser" placeholder="@club_owner yoki 123456789" />
           </label>
           <label class="field">
-            <span>Telegram chat_id</span>
+            <span>Telegram chat ID</span>
             <input v-model.trim="form.telegramChatId" placeholder="-1001234567890" />
           </label>
         </div>
@@ -311,18 +304,18 @@
     </template>
 
     <template v-else-if="activeTab === 'automation'">
-      <CpPanelCard title="Auto shift" subtitle="Avtomatik smena jadvali va opening cash">
+      <CpPanelCard title="Avto smena" subtitle="Smenalar jadvali va boshlang‘ich kassa summasi">
         <div class="form-grid">
           <label class="check-line field-span-2">
             <input v-model="form.autoShiftEnabled" type="checkbox" @change="onAutoShiftEnabledChange" />
-            <span>Auto smena yoqilgan</span>
+            <span>Avto smena yoqilgan</span>
           </label>
           <label class="field">
             <span>Smena soni (24 soat)</span>
             <input v-model.number="autoShiftDraftCount" type="number" min="1" max="6" @input="applyAutoShiftCount" />
           </label>
           <label class="field">
-            <span>Opening cash</span>
+            <span>Boshlang‘ich kassa</span>
             <input v-model.number="form.autoShiftOpeningCash" type="number" min="0" />
           </label>
         </div>
@@ -361,6 +354,340 @@
       </CpPanelCard>
     </template>
 
+    <template v-else-if="activeTab === 'team'">
+      <div class="team-shell">
+        <div class="team-workspace-head">
+          <div class="team-subtabs">
+            <button
+              v-for="tab in visibleTeamTabs"
+              :key="tab.key"
+              type="button"
+              class="team-subtab"
+              :class="{ active: activeTeamTab === tab.key }"
+              @click="activeTeamTab = tab.key"
+            >
+              <Icon :name="tab.icon" size="15" />
+              <span>{{ tab.label }}</span>
+            </button>
+          </div>
+
+          <div class="team-toolbar">
+            <button class="ghost-btn" type="button" :disabled="operatorsLoading || payrollLoading || taskLoading" @click="loadStaffData">
+              <Icon name="lucide:refresh-cw" size="14" />
+              <span>{{ operatorsLoading || payrollLoading || taskLoading ? 'Yangilanmoqda...' : 'Yangilash' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <template v-if="activeTeamTab === 'staff' && canManageTeam">
+          <div class="team-grid">
+            <CpPanelCard title="Yangi xodim" subtitle="Operator yoki administrator profilini yarating.">
+              <form class="team-create is-flat" @submit.prevent="createOperator">
+                <div class="form-grid">
+                  <label class="field">
+                    <span>Ism</span>
+                    <input v-model.trim="operatorForm.name" placeholder="Masalan: Aziz" />
+                  </label>
+                  <label class="field">
+                    <span>Kirish nomi</span>
+                    <input v-model.trim="operatorForm.login" placeholder="aziz.operator" />
+                  </label>
+                  <label class="field">
+                    <span>Parol</span>
+                    <input v-model="operatorForm.password" type="password" placeholder="Kamida 4 belgi" />
+                  </label>
+                  <label class="field">
+                    <span>Rol</span>
+                    <select v-model="operatorForm.role">
+                      <option value="operator">Operator</option>
+                      <option value="admin">Administrator</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Ish haqi turi</span>
+                    <select v-model="operatorForm.salaryType">
+                      <option value="daily">Kunlik</option>
+                      <option value="monthly">Oylik</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Ish haqi summasi</span>
+                    <input v-model.number="operatorForm.salaryAmount" type="number" min="0" step="1000" placeholder="0" />
+                  </label>
+                </div>
+                <button class="primary-btn team-submit" type="submit" :disabled="operatorSaving">
+                  <Icon name="lucide:user-plus" size="14" />
+                  <span>{{ operatorSaving ? 'Qo‘shilmoqda...' : 'Xodim qo‘shish' }}</span>
+                </button>
+              </form>
+            </CpPanelCard>
+
+            <CpPanelCard title="Xodimlar" subtitle="Ish haqi summasi, davomat va faol holatni boshqarish.">
+              <div v-if="operatorsLoading" class="team-empty">Jamoa yuklanmoqda...</div>
+              <div v-else-if="!staffOperators.length" class="team-empty">Hali operator yoki administrator qo‘shilmagan.</div>
+              <div v-else class="staff-list">
+                <article v-for="staff in staffOperators" :key="staff.id" class="staff-row compact">
+                  <div class="staff-person">
+                    <div class="staff-avatar">{{ initials(staff.name || staff.login) }}</div>
+                    <div>
+                      <strong>{{ staff.name || staff.login }}</strong>
+                      <span>{{ roleLabel(staff.role) }} · {{ staff.login }} · {{ staff.is_active ? 'Faol' : 'O‘chirilgan' }}</span>
+                    </div>
+                  </div>
+
+                  <label class="field staff-inline-field">
+                    <span>Turi</span>
+                    <select v-model="staff.salary_type">
+                      <option value="daily">Kunlik</option>
+                      <option value="monthly">Oylik</option>
+                    </select>
+                  </label>
+                  <label class="field staff-inline-field">
+                    <span>Ish haqi summasi</span>
+                    <input v-model.number="staff.salary_amount" type="number" min="0" step="1000" />
+                  </label>
+
+                  <div class="staff-actions">
+                    <button class="ghost-btn compact-btn" type="button" :disabled="savingOperatorId === staff.id" @click="saveStaffSalary(staff)">
+                      Saqlash
+                    </button>
+                    <button class="ghost-btn compact-btn" type="button" :disabled="savingOperatorId === staff.id" @click="markTodayAttendance(staff)">
+                      Bugun ishladi
+                    </button>
+                    <button class="ghost-btn compact-btn" type="button" :disabled="savingOperatorId === staff.id" @click="toggleStaff(staff)">
+                      {{ staff.is_active ? 'O‘chirish' : 'Faollashtirish' }}
+                    </button>
+                  </div>
+                </article>
+              </div>
+            </CpPanelCard>
+          </div>
+        </template>
+
+        <template v-else-if="activeTeamTab === 'payroll' && canManageTeam">
+          <CpPanelCard title="Ish haqi hisob-kitobi" subtitle="Davrni tanlang, ish haqi va jarimalarni ko‘ring.">
+            <div class="team-summary">
+              <div class="team-summary-card">
+                <span>Xodimlar</span>
+                <strong>{{ staffOperators.length }}</strong>
+              </div>
+              <div class="team-summary-card">
+                <span>To‘lanadigan summa</span>
+                <strong>{{ money(payroll?.summary?.net_payable_total || 0) }}</strong>
+              </div>
+              <div class="team-summary-card">
+                <span>Jarimalar</span>
+                <strong>{{ money(payroll?.summary?.penalty_total || 0) }}</strong>
+              </div>
+              <div class="team-summary-card">
+                <span>Ishlangan kunlar</span>
+                <strong>{{ payroll?.summary?.worked_days_total || 0 }}</strong>
+              </div>
+            </div>
+
+            <div class="payroll-box is-flat">
+              <div class="payroll-filter">
+                <label class="field">
+                  <span>Dan</span>
+                  <input v-model="payrollFilter.from" type="date" />
+                </label>
+                <label class="field">
+                  <span>Gacha</span>
+                  <input v-model="payrollFilter.to" type="date" />
+                </label>
+                <button class="ghost-btn" type="button" :disabled="payrollLoading" @click="loadPayroll">
+                  <Icon name="lucide:calculator" size="14" />
+                  <span>Hisoblash</span>
+                </button>
+              </div>
+
+              <div class="payroll-metrics">
+                <div class="payroll-metric">
+                  <span>To‘lanadigan summa</span>
+                  <strong>{{ money(payroll?.summary?.net_payable_total || 0) }}</strong>
+                </div>
+                <div class="payroll-metric">
+                  <span>Jarima</span>
+                  <strong>{{ money(payroll?.summary?.penalty_total || 0) }}</strong>
+                </div>
+                <div class="payroll-metric">
+                  <span>Ishlagan kun</span>
+                  <strong>{{ payroll?.summary?.worked_days_total || 0 }}</strong>
+                </div>
+              </div>
+            </div>
+          </CpPanelCard>
+
+          <CpPanelCard title="Bonus, jarima va yakuniy hisob" subtitle="Qo‘shimcha to‘lovlar, avans, jarima va yakuniy ish haqi davrini boshqarish.">
+            <div class="payroll-action-grid">
+              <label class="field">
+                <span>Xodim</span>
+                <select v-model.number="payrollAction.operatorId">
+                  <option :value="0">Tanlang</option>
+                  <option v-for="staff in staffOperators" :key="`adj-${staff.id}`" :value="staff.id">
+                    {{ staff.name || staff.login }}
+                  </option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Turi</span>
+                <select v-model="payrollAction.type">
+                  <option value="bonus">Bonus</option>
+                  <option value="penalty">Jarima</option>
+                  <option value="advance">Avans</option>
+                  <option value="correction">Tuzatish</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Summa</span>
+                <input v-model.number="payrollAction.amount" type="number" step="1000" />
+              </label>
+              <label class="field">
+                <span>Sana</span>
+                <input v-model="payrollAction.date" type="date" />
+              </label>
+              <label class="field field-span-2">
+                <span>Izoh</span>
+                <input v-model.trim="payrollAction.note" placeholder="Masalan: yaxshi smena uchun bonus" />
+              </label>
+            </div>
+
+            <div class="inline-actions">
+              <button class="primary-btn" type="button" :disabled="payrollBusy" @click="createPayrollAdjustment">
+                <Icon name="lucide:plus" size="14" />
+                <span>Qo‘shish</span>
+              </button>
+              <button class="ghost-btn" type="button" :disabled="payrollBusy" @click="generatePayrollPeriod">
+                <Icon name="lucide:file-check-2" size="14" />
+                <span>Yakuniy hisob davrini yaratish</span>
+              </button>
+              <button class="ghost-btn" type="button" :disabled="payrollBusy" @click="exportPayrollXlsx">
+                <Icon name="lucide:file-spreadsheet" size="14" />
+                <span>Excel yuklash</span>
+              </button>
+              <button class="ghost-btn" type="button" :disabled="payrollBusy" @click="exportPayrollPdf">
+                <Icon name="lucide:file-text" size="14" />
+                <span>PDF yuklash</span>
+              </button>
+            </div>
+
+            <div v-if="payrollPeriods.length" class="period-list">
+              <div v-for="period in payrollPeriods.slice(0, 4)" :key="period.id" class="period-row">
+                <div>
+                  <strong>{{ period.name }}</strong>
+                  <span>{{ period.period_from }} - {{ period.period_to }} · {{ periodStatusLabel(period.status) }}</span>
+                </div>
+                <div class="period-money">{{ money(period.net_total || 0) }}</div>
+                <div class="period-actions">
+                  <button v-if="period.status === 'draft'" class="ghost-btn compact-btn" type="button" :disabled="payrollBusy" @click="approvePayrollPeriod(period.id)">
+                    Tasdiqlash
+                  </button>
+                  <button v-if="period.status === 'approved'" class="ghost-btn compact-btn" type="button" :disabled="payrollBusy" @click="markPayrollPeriodPaid(period.id)">
+                    To‘landi
+                  </button>
+                </div>
+              </div>
+            </div>
+          </CpPanelCard>
+        </template>
+
+        <CpPanelCard v-else-if="activeTeamTab === 'tasks' && canManageTasks" title="Vazifalar" subtitle="Owner yoki administrator operatorga muddatli vazifa beradi. Muddatdan o‘tsa jarima avtomatik belgilanadi.">
+          <div class="task-layout">
+            <form class="task-create" @submit.prevent="createOperatorTask">
+              <div class="team-card-title">Yangi vazifa</div>
+              <div class="form-grid">
+                <label class="field">
+                  <span>Xodim</span>
+                  <select v-model.number="taskForm.assignedToOperatorId">
+                    <option :value="0">Tanlang</option>
+                    <option v-for="staff in staffOperators" :key="`task-staff-${staff.id}`" :value="staff.id">
+                      {{ staff.name || staff.login }}
+                    </option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Muddat</span>
+                  <input v-model="taskForm.dueAt" type="datetime-local" />
+                </label>
+                <label class="field field-span-2">
+                  <span>Vazifa nomi</span>
+                  <input v-model.trim="taskForm.title" placeholder="Masalan: reklama bannerni 22:00 gacha almashtirish" />
+                </label>
+                <label class="field">
+                  <span>Jarima summasi</span>
+                  <input v-model.number="taskForm.penaltyAmount" type="number" min="0" step="1000" placeholder="0" />
+                </label>
+                <label class="field">
+                  <span>Holat filtri</span>
+                  <select v-model="taskFilter.status" @change="loadOperatorTasks">
+                    <option value="open">Ochiq vazifalar</option>
+                    <option value="">Barchasi</option>
+                    <option value="pending">Kutilmoqda</option>
+                    <option value="overdue">Muddati o‘tgan</option>
+                    <option value="completed">Bajarilgan</option>
+                    <option value="cancelled">Bekor qilingan</option>
+                  </select>
+                </label>
+                <label class="field field-span-2">
+                  <span>Izoh</span>
+                  <textarea v-model.trim="taskForm.description" placeholder="Operator nimani, qachongacha va qanday natija bilan bajarishi kerakligini yozing."></textarea>
+                </label>
+              </div>
+              <button class="primary-btn team-submit" type="submit" :disabled="taskBusy || operatorsLoading">
+                <Icon name="lucide:clipboard-plus" size="14" />
+                <span>{{ taskBusy ? 'Yuborilmoqda...' : 'Vazifa berish' }}</span>
+              </button>
+            </form>
+
+            <div class="task-list-box">
+              <div class="task-list-head">
+                <div>
+                  <div class="team-card-title">Vazifalar ro‘yxati</div>
+                  <p class="team-hint">Operatorlar o‘ziga biriktirilgan ishni bajarilgan deb belgilaydi, owner/admin esa nazorat qiladi.</p>
+                </div>
+                <button class="ghost-btn compact-btn" type="button" :disabled="taskLoading" @click="loadOperatorTasks">
+                  <Icon name="lucide:refresh-cw" size="13" />
+                  <span>Yangilash</span>
+                </button>
+              </div>
+
+              <div v-if="taskLoading" class="team-empty">Vazifalar yuklanmoqda...</div>
+              <div v-else-if="!operatorTasks.length" class="team-empty">Hali vazifa berilmagan.</div>
+              <div v-else class="task-list">
+                <article v-for="task in operatorTasks" :key="task.id" class="task-row" :class="taskStatusClass(task.status)">
+                  <div class="task-row-top">
+                    <div>
+                      <strong>{{ task.title }}</strong>
+                      <span>{{ taskAssigneeName(task) }} · {{ taskDueLabel(task.due_at) }}</span>
+                    </div>
+                    <span class="task-status">{{ taskStatusLabel(task.status) }}</span>
+                  </div>
+                  <p v-if="task.description" class="task-description">{{ task.description }}</p>
+                  <div class="task-meta">
+                    <span>Jarima: {{ money(task.penalty_amount || 0) }}</span>
+                    <span v-if="task.penalty_applied">Jarima belgilangan</span>
+                    <span v-if="task.completed_at">Bajarildi: {{ taskDueLabel(task.completed_at) }}</span>
+                  </div>
+                  <div class="task-actions">
+                    <button v-if="['pending', 'overdue'].includes(String(task.status))" class="ghost-btn compact-btn" type="button" :disabled="taskBusy" @click="completeOperatorTask(task)">
+                      Bajarildi
+                    </button>
+                    <button v-if="['pending', 'overdue'].includes(String(task.status))" class="ghost-btn compact-btn" type="button" :disabled="taskBusy" @click="cancelOperatorTask(task)">
+                      Bekor qilish
+                    </button>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+        </CpPanelCard>
+
+        <CpPanelCard v-else title="Ruxsat cheklangan" subtitle="Bu bo‘lim sizning rolingiz uchun yopiq.">
+          <div class="team-empty">Kerakli bo‘limni ko‘rish uchun owner huquqi kerak.</div>
+        </CpPanelCard>
+      </div>
+    </template>
+
     <div class="sticky-actions">
       <button class="primary-btn save-btn" type="button" :disabled="saving" @click="saveSettings">
         <Icon name="lucide:save" size="15" />
@@ -371,8 +698,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { cpApi } from '@legacy/api/cp'
+import { useCpAuthStore } from '@legacy/stores/cpAuth'
 import { useCpFormatters } from '../../../composables/useCpFormatters'
 
 definePageMeta({
@@ -381,21 +709,24 @@ definePageMeta({
 })
 
 const { formatDateTime } = useCpFormatters()
+const auth = useCpAuthStore()
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
 const message = ref('')
 const updatedAt = ref(new Date().toISOString())
 const activeTab = ref('club')
+const activeTeamTab = ref('staff')
 
 const tabs = [
-  { key: 'club', icon: 'lucide:badge-info', label: 'Club' },
+  { key: 'club', icon: 'lucide:badge-info', label: 'Klub' },
   { key: 'media', icon: 'lucide:monitor-play', label: 'Media' },
-  { key: 'installers', icon: 'lucide:download', label: 'Installers' },
-  { key: 'shell', icon: 'lucide:monitor-cog', label: 'Shell' },
-  { key: 'location', icon: 'lucide:map-pinned', label: 'Location' },
+  { key: 'installers', icon: 'lucide:download', label: 'O‘rnatish' },
+  { key: 'shell', icon: 'lucide:monitor-cog', label: 'Shell sozlamalari' },
+  { key: 'location', icon: 'lucide:map-pinned', label: 'Manzil' },
   { key: 'telegram', icon: 'lucide:send', label: 'Telegram' },
-  { key: 'automation', icon: 'lucide:clock-3', label: 'Auto shift' },
+  { key: 'automation', icon: 'lucide:clock-3', label: 'Avto smena' },
+  { key: 'team', icon: 'lucide:users', label: 'Jamoa' },
 ]
 
 const logoInput = ref(null)
@@ -414,6 +745,53 @@ const agentUploading = ref(false)
 const clientUploading = ref(false)
 const shellUploading = ref(false)
 const autoShiftDraftCount = ref(2)
+const operatorsLoading = ref(false)
+const operatorSaving = ref(false)
+const payrollLoading = ref(false)
+const payrollBusy = ref(false)
+const taskLoading = ref(false)
+const taskBusy = ref(false)
+const savingOperatorId = ref(null)
+
+const operators = ref([])
+const payroll = ref(null)
+const payrollPeriods = ref([])
+const payrollAdjustments = ref([])
+const operatorTasks = ref([])
+
+const operatorForm = reactive({
+  name: '',
+  login: '',
+  password: '',
+  role: 'operator',
+  salaryType: 'daily',
+  salaryAmount: 0,
+})
+
+const payrollFilter = reactive({
+  from: monthDate('start'),
+  to: monthDate('end'),
+})
+
+const payrollAction = reactive({
+  operatorId: 0,
+  type: 'bonus',
+  amount: 0,
+  date: todayDate(),
+  note: '',
+})
+
+const taskFilter = reactive({
+  status: 'open',
+})
+
+const taskForm = reactive({
+  assignedToOperatorId: 0,
+  title: '',
+  description: '',
+  dueAt: defaultTaskDueAt(),
+  penaltyAmount: 0,
+})
 
 const form = reactive({
   clubName: '',
@@ -451,6 +829,26 @@ const promoFileName = computed(() => promoFile.value?.name || '')
 const agentFileName = computed(() => agentFile.value?.name || '')
 const clientFileName = computed(() => clientFile.value?.name || '')
 const shellFileName = computed(() => shellFile.value?.name || '')
+const staffOperators = computed(() => (
+  Array.isArray(operators.value)
+    ? operators.value.filter((item) => ['operator', 'admin'].includes(String(item?.role || '').toLowerCase()))
+    : []
+))
+const canManageTeam = computed(() => String(auth.operator?.role || '').toLowerCase() === 'owner')
+const canManageTasks = computed(() => ['owner', 'admin'].includes(String(auth.operator?.role || '').toLowerCase()))
+const visibleTeamTabs = computed(() => {
+  const items = []
+  if (canManageTeam.value) {
+    items.push(
+      { key: 'staff', icon: 'lucide:users', label: 'Xodimlar' },
+      { key: 'payroll', icon: 'lucide:wallet-cards', label: 'Ish haqi' },
+    )
+  }
+  if (canManageTasks.value) {
+    items.push({ key: 'tasks', icon: 'lucide:clipboard-list', label: 'Vazifalar' })
+  }
+  return items
+})
 const clubReady = computed(() => !!form.clubName.trim() || !!form.clubLogo)
 const mediaReady = computed(() => !!form.promoVideoUrl.trim())
 const installersReadyCount = computed(() => [form.clientInstallerUrl, form.agentInstallerUrl, form.shellInstallerUrl].filter((item) => String(item || '').trim()).length)
@@ -462,7 +860,143 @@ const readySections = computed(() => [
   !!form.address.trim() || (validNumber(form.lat) !== null && validNumber(form.lng) !== null),
   !!form.telegramBotToken.trim() || !!form.telegramUser.trim() || !!form.telegramChatId.trim(),
   form.autoShiftEnabled ? normalizeSlots(form.autoShiftSlots).length > 0 : false,
+  staffOperators.value.length > 0,
 ].filter(Boolean).length)
+
+function monthDate(edge) {
+  const d = new Date()
+  const target = edge === 'start'
+    ? new Date(d.getFullYear(), d.getMonth(), 1)
+    : new Date(d.getFullYear(), d.getMonth() + 1, 0)
+  const year = target.getFullYear()
+  const month = String(target.getMonth() + 1).padStart(2, '0')
+  const day = String(target.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function todayDate() {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function defaultTaskDueAt() {
+  const d = new Date(Date.now() + 2 * 60 * 60 * 1000)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hour = String(d.getHours()).padStart(2, '0')
+  const minute = String(d.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hour}:${minute}`
+}
+
+function money(value) {
+  return `${Number(value || 0).toLocaleString('ru-RU')} so‘m`
+}
+
+function initials(value) {
+  const parts = String(value || 'N')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+  return (parts[0]?.[0] || 'N').toUpperCase() + (parts[1]?.[0] || '').toUpperCase()
+}
+
+function roleLabel(role) {
+  const value = String(role || '').toLowerCase()
+  if (value === 'admin') return 'Administrator'
+  if (value === 'operator') return 'Operator'
+  return value || '-'
+}
+
+function periodStatusLabel(status) {
+  const value = String(status || '').toLowerCase()
+  if (value === 'draft') return 'Qoralama'
+  if (value === 'approved') return 'Tasdiqlangan'
+  if (value === 'paid') return 'To‘langan'
+  if (value === 'cancelled') return 'Bekor qilingan'
+  return value || '-'
+}
+
+function taskStatusLabel(status) {
+  const value = String(status || '').toLowerCase()
+  if (value === 'pending') return 'Kutilmoqda'
+  if (value === 'overdue') return 'Muddati o‘tgan'
+  if (value === 'completed') return 'Bajarilgan'
+  if (value === 'cancelled') return 'Bekor qilingan'
+  return value || '-'
+}
+
+function taskStatusClass(status) {
+  const value = String(status || '').toLowerCase()
+  if (value === 'completed') return 'is-completed'
+  if (value === 'overdue') return 'is-overdue'
+  if (value === 'cancelled') return 'is-cancelled'
+  return 'is-pending'
+}
+
+function taskDueLabel(value) {
+  return value ? formatDateTime(value) : '-'
+}
+
+function taskAssigneeName(task) {
+  const assigned = task?.assigned_to || {}
+  return assigned.name || assigned.login || 'Xodim'
+}
+
+function payrollLine(operatorId) {
+  const rows = payroll.value?.operators
+  if (!Array.isArray(rows)) return null
+  return rows.find((row) => Number(row?.operator?.id) === Number(operatorId)) || null
+}
+
+function resetOperatorForm() {
+  operatorForm.name = ''
+  operatorForm.login = ''
+  operatorForm.password = ''
+  operatorForm.role = 'operator'
+  operatorForm.salaryType = 'daily'
+  operatorForm.salaryAmount = 0
+}
+
+function resetTaskForm() {
+  taskForm.title = ''
+  taskForm.description = ''
+  taskForm.dueAt = defaultTaskDueAt()
+  taskForm.penaltyAmount = 0
+  if (!taskForm.assignedToOperatorId && staffOperators.value[0]?.id) {
+    taskForm.assignedToOperatorId = staffOperators.value[0].id
+  }
+}
+
+function downloadBlob(data, filename) {
+  const blob = data instanceof Blob ? data : new Blob([data])
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+function selectTab(key) {
+  activeTab.value = key
+  if (key === 'team') ensureTeamTab()
+  if (key === 'team' && (canManageTeam.value || canManageTasks.value) && !operatorsLoading.value && !payrollLoading.value && !staffOperators.value.length) {
+    loadStaffData()
+  }
+}
+
+function ensureTeamTab() {
+  const first = visibleTeamTabs.value[0]?.key || 'tasks'
+  if (!visibleTeamTabs.value.some((tab) => tab.key === activeTeamTab.value)) {
+    activeTeamTab.value = first
+  }
+}
 
 function getYoutubeId(raw) {
   try {
@@ -635,7 +1169,7 @@ async function loadSettings() {
     autoShiftDraftCount.value = form.autoShiftSlots.length || 2
     updatedAt.value = new Date().toISOString()
   } catch (e) {
-    error.value = e?.response?.data?.message || 'Settings yuklanmadi'
+    error.value = e?.response?.data?.message || 'Sozlamalar yuklanmadi'
   } finally {
     loading.value = false
   }
@@ -677,9 +1211,9 @@ async function uploadPromoFile() {
     if (data?.url) form.promoVideoUrl = data.url
     promoFile.value = null
     if (promoFileInput.value) promoFileInput.value.value = ''
-    message.value = 'Promo video yuklandi'
+    message.value = 'Reklama videosi yuklandi'
   } catch (e) {
-    error.value = e?.response?.data?.message || 'Promo yuklanmadi'
+    error.value = e?.response?.data?.message || 'Reklama videosi yuklanmadi'
   } finally {
     promoUploading.value = false
   }
@@ -702,9 +1236,9 @@ async function uploadAgentFile() {
     if (data?.sha256) form.agentHash = data.sha256
     agentFile.value = null
     if (agentFileInput.value) agentFileInput.value.value = ''
-    message.value = 'Agent installer yuklandi'
+    message.value = 'Agent fayli yuklandi'
   } catch (e) {
-    error.value = e?.response?.data?.message || 'Agent installer yuklanmadi'
+    error.value = e?.response?.data?.message || 'Agent fayli yuklanmadi'
   } finally {
     agentUploading.value = false
   }
@@ -726,9 +1260,9 @@ async function uploadClientFile() {
     if (data?.url) form.clientInstallerUrl = data.url
     clientFile.value = null
     if (clientFileInput.value) clientFileInput.value.value = ''
-    message.value = 'Client installer yuklandi'
+    message.value = 'Kompyuter ilovasi fayli yuklandi'
   } catch (e) {
-    error.value = e?.response?.data?.message || 'Client installer yuklanmadi'
+    error.value = e?.response?.data?.message || 'Kompyuter ilovasi fayli yuklanmadi'
   } finally {
     clientUploading.value = false
   }
@@ -751,9 +1285,9 @@ async function uploadShellFile() {
     if (data?.sha256) form.shellHash = data.sha256
     shellFile.value = null
     if (shellFileInput.value) shellFileInput.value.value = ''
-    message.value = 'Shell installer yuklandi'
+    message.value = 'Shell fayli yuklandi'
   } catch (e) {
-    error.value = e?.response?.data?.message || 'Shell installer yuklanmadi'
+    error.value = e?.response?.data?.message || 'Shell fayli yuklanmadi'
   } finally {
     shellUploading.value = false
   }
@@ -777,6 +1311,381 @@ function useMyLocation() {
     },
     { enableHighAccuracy: true, timeout: 10000 },
   )
+}
+
+async function loadOperators() {
+  operatorsLoading.value = true
+  try {
+    const { data } = await cpApi.operators()
+    operators.value = Array.isArray(data?.data) ? data.data : []
+    if (!payrollAction.operatorId && staffOperators.value[0]?.id) {
+      payrollAction.operatorId = staffOperators.value[0].id
+    }
+    if (!taskForm.assignedToOperatorId && staffOperators.value[0]?.id) {
+      taskForm.assignedToOperatorId = staffOperators.value[0].id
+    }
+  } catch (e) {
+    operators.value = []
+    error.value = e?.response?.data?.message || 'Jamoa yuklanmadi'
+  } finally {
+    operatorsLoading.value = false
+  }
+}
+
+async function loadOperatorTasks() {
+  if (!canManageTasks.value) return
+  taskLoading.value = true
+  try {
+    const params = {
+      per_page: 30,
+    }
+    if (taskFilter.status === 'open') {
+      params.open = 1
+    } else if (taskFilter.status) {
+      params.status = taskFilter.status
+    }
+    const { data } = await cpApi.operatorTasks(params)
+    const payload = data?.data
+    operatorTasks.value = Array.isArray(payload?.data)
+      ? payload.data
+      : (Array.isArray(payload) ? payload : [])
+  } catch (e) {
+    operatorTasks.value = []
+    error.value = e?.response?.data?.message || 'Vazifalar yuklanmadi'
+  } finally {
+    taskLoading.value = false
+  }
+}
+
+async function loadPayroll() {
+  payrollLoading.value = true
+  try {
+    const { data } = await cpApi.operatorPayroll({
+      from: payrollFilter.from,
+      to: payrollFilter.to,
+    })
+    payroll.value = data?.data || null
+  } catch (e) {
+    payroll.value = null
+    error.value = e?.response?.data?.message || 'Ish haqi hisoblanmadi'
+  } finally {
+    payrollLoading.value = false
+  }
+}
+
+async function loadPayrollMeta() {
+  try {
+    const [periodsResponse, adjustmentsResponse] = await Promise.all([
+      cpApi.payrollPeriods(),
+      cpApi.payrollAdjustments({
+        from: payrollFilter.from,
+        to: payrollFilter.to,
+      }),
+    ])
+    payrollPeriods.value = Array.isArray(periodsResponse?.data?.data) ? periodsResponse.data.data : []
+    payrollAdjustments.value = Array.isArray(adjustmentsResponse?.data?.data) ? adjustmentsResponse.data.data : []
+  } catch (e) {
+    payrollPeriods.value = []
+    payrollAdjustments.value = []
+    if (!error.value) error.value = e?.response?.data?.message || 'Ish haqi ma’lumotlari yuklanmadi'
+  }
+}
+
+async function loadStaffData() {
+  if (!canManageTeam.value && !canManageTasks.value) return
+  error.value = ''
+  message.value = ''
+  const loaders = [loadOperators()]
+  if (canManageTeam.value) {
+    loaders.push(loadPayroll(), loadPayrollMeta())
+  }
+  if (canManageTasks.value) {
+    loaders.push(loadOperatorTasks())
+  }
+  await Promise.all(loaders)
+}
+
+async function createOperator() {
+  if (operatorSaving.value) return
+  error.value = ''
+  message.value = ''
+
+  const payload = {
+    name: String(operatorForm.name || '').trim(),
+    login: String(operatorForm.login || '').trim(),
+    password: String(operatorForm.password || ''),
+    role: operatorForm.role,
+    salary_type: operatorForm.salaryType,
+    salary_amount: Math.max(0, Number(operatorForm.salaryAmount || 0)),
+    is_active: true,
+  }
+
+  if (!payload.name || !payload.login || !payload.password) {
+    error.value = 'Ism, login va parol majburiy'
+    return
+  }
+
+  operatorSaving.value = true
+  try {
+    await cpApi.operatorCreate(payload)
+    resetOperatorForm()
+    message.value = 'Xodim qo‘shildi'
+    await loadStaffData()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Xodim qo‘shilmadi'
+  } finally {
+    operatorSaving.value = false
+  }
+}
+
+async function saveStaffSalary(staff) {
+  if (!staff?.id || savingOperatorId.value) return
+  error.value = ''
+  message.value = ''
+  savingOperatorId.value = staff.id
+  try {
+    await cpApi.operatorUpdate(staff.id, {
+      name: staff.name,
+      login: staff.login,
+      role: staff.role,
+      is_active: !!staff.is_active,
+      salary_type: staff.salary_type || 'daily',
+      salary_amount: Math.max(0, Number(staff.salary_amount || 0)),
+    })
+    message.value = 'Ish haqi summasi saqlandi'
+    await loadStaffData()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Ish haqi summasi saqlanmadi'
+  } finally {
+    savingOperatorId.value = null
+  }
+}
+
+async function toggleStaff(staff) {
+  if (!staff?.id || savingOperatorId.value) return
+  error.value = ''
+  message.value = ''
+  savingOperatorId.value = staff.id
+  try {
+    await cpApi.operatorUpdate(staff.id, {
+      name: staff.name,
+      login: staff.login,
+      role: staff.role,
+      is_active: !staff.is_active,
+      salary_type: staff.salary_type || 'daily',
+      salary_amount: Math.max(0, Number(staff.salary_amount || 0)),
+    })
+    message.value = !staff.is_active ? 'Xodim faollashtirildi' : 'Xodim o‘chirildi'
+    await loadStaffData()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Xodim holati o‘zgarmadi'
+  } finally {
+    savingOperatorId.value = null
+  }
+}
+
+async function markTodayAttendance(staff) {
+  if (!staff?.id || savingOperatorId.value) return
+  error.value = ''
+  message.value = ''
+  savingOperatorId.value = staff.id
+  try {
+    await cpApi.operatorAttendanceSave({
+      operator_id: staff.id,
+      work_date: todayDate(),
+      status: 'worked',
+      note: 'Sozlamalar sahifasi orqali belgilandi',
+    })
+    message.value = 'Bugungi davomat belgilandi'
+    await loadStaffData()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Davomat belgilanmadi'
+  } finally {
+    savingOperatorId.value = null
+  }
+}
+
+async function createOperatorTask() {
+  if (taskBusy.value) return
+  error.value = ''
+  message.value = ''
+
+  const payload = {
+    assigned_to_operator_id: Number(taskForm.assignedToOperatorId || 0),
+    title: String(taskForm.title || '').trim(),
+    description: String(taskForm.description || '').trim() || null,
+    due_at: taskForm.dueAt ? `${taskForm.dueAt}:00` : '',
+    penalty_amount: Math.max(0, Number(taskForm.penaltyAmount || 0)),
+  }
+
+  if (!payload.assigned_to_operator_id || !payload.title || !payload.due_at) {
+    error.value = 'Xodim, vazifa nomi va muddat majburiy'
+    return
+  }
+
+  taskBusy.value = true
+  try {
+    await cpApi.operatorTaskCreate(payload)
+    resetTaskForm()
+    message.value = 'Vazifa operatorga biriktirildi'
+    await loadOperatorTasks()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Vazifa berilmadi'
+  } finally {
+    taskBusy.value = false
+  }
+}
+
+async function completeOperatorTask(task) {
+  if (!task?.id || taskBusy.value) return
+  error.value = ''
+  message.value = ''
+  taskBusy.value = true
+  try {
+    await cpApi.operatorTaskComplete(task.id, {
+      completion_note: 'Panel orqali bajarildi deb belgilandi',
+    })
+    message.value = 'Vazifa bajarildi deb belgilandi'
+    await loadOperatorTasks()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Vazifa bajarilgan deb belgilanmadi'
+  } finally {
+    taskBusy.value = false
+  }
+}
+
+async function cancelOperatorTask(task) {
+  if (!task?.id || taskBusy.value) return
+  error.value = ''
+  message.value = ''
+  taskBusy.value = true
+  try {
+    await cpApi.operatorTaskCancel(task.id)
+    message.value = 'Vazifa bekor qilindi'
+    await loadOperatorTasks()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Vazifa bekor qilinmadi'
+  } finally {
+    taskBusy.value = false
+  }
+}
+
+async function createPayrollAdjustment() {
+  if (payrollBusy.value) return
+  error.value = ''
+  message.value = ''
+
+  if (!payrollAction.operatorId || !Number(payrollAction.amount || 0)) {
+    error.value = 'Xodim va summani kiriting'
+    return
+  }
+
+  payrollBusy.value = true
+  try {
+    await cpApi.payrollAdjustmentCreate({
+      operator_id: payrollAction.operatorId,
+      type: payrollAction.type,
+      amount: Number(payrollAction.amount || 0),
+      effective_date: payrollAction.date || todayDate(),
+      note: String(payrollAction.note || '').trim() || null,
+    })
+    payrollAction.amount = 0
+    payrollAction.note = ''
+    message.value = 'Ish haqi yozuvi qo‘shildi'
+    await loadStaffData()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Ish haqi yozuvi qo‘shilmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function generatePayrollPeriod() {
+  if (payrollBusy.value) return
+  error.value = ''
+  message.value = ''
+  payrollBusy.value = true
+  try {
+    await cpApi.payrollPeriodCreate({
+      name: `Ish haqi ${payrollFilter.from} - ${payrollFilter.to}`,
+      from: payrollFilter.from,
+      to: payrollFilter.to,
+    })
+    message.value = 'Yakuniy hisob davri yaratildi'
+    await loadStaffData()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Yakuniy hisob davri yaratilmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function approvePayrollPeriod(id) {
+  if (!id || payrollBusy.value) return
+  error.value = ''
+  message.value = ''
+  payrollBusy.value = true
+  try {
+    await cpApi.payrollPeriodApprove(id)
+    message.value = 'Yakuniy hisob davri tasdiqlandi'
+    await loadStaffData()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Yakuniy hisob davri tasdiqlanmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function markPayrollPeriodPaid(id) {
+  if (!id || payrollBusy.value) return
+  error.value = ''
+  message.value = ''
+  payrollBusy.value = true
+  try {
+    await cpApi.payrollPeriodMarkPaid(id)
+    message.value = 'Yakuniy hisob davri to‘landi'
+    await loadStaffData()
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Yakuniy hisob davri to‘landi deb belgilanmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function exportPayrollXlsx() {
+  if (payrollBusy.value) return
+  error.value = ''
+  message.value = ''
+  payrollBusy.value = true
+  try {
+    const { data } = await cpApi.payrollExportXlsx({
+      from: payrollFilter.from,
+      to: payrollFilter.to,
+    })
+    downloadBlob(data, `operator-payroll-${payrollFilter.from}-${payrollFilter.to}.xlsx`)
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'Excel yuklanmadi'
+  } finally {
+    payrollBusy.value = false
+  }
+}
+
+async function exportPayrollPdf() {
+  if (payrollBusy.value) return
+  error.value = ''
+  message.value = ''
+  payrollBusy.value = true
+  try {
+    const { data } = await cpApi.payrollExportPdf({
+      from: payrollFilter.from,
+      to: payrollFilter.to,
+    })
+    downloadBlob(data, `operator-payroll-${payrollFilter.from}-${payrollFilter.to}.pdf`)
+  } catch (e) {
+    error.value = e?.response?.data?.message || 'PDF yuklanmadi'
+  } finally {
+    payrollBusy.value = false
+  }
 }
 
 async function saveSettings() {
@@ -820,7 +1729,7 @@ async function saveSettings() {
     }
     await cpApi.settingsUpdate(payload)
     updatedAt.value = new Date().toISOString()
-    message.value = 'Settings saqlandi'
+    message.value = 'Sozlamalar saqlandi'
     if (process.client) {
       window.dispatchEvent(new CustomEvent('cp-club-settings-updated', {
         detail: {
@@ -830,15 +1739,27 @@ async function saveSettings() {
       }))
     }
   } catch (e) {
-    error.value = e?.response?.data?.message || 'Settings saqlanmadi'
+    error.value = e?.response?.data?.message || 'Sozlamalar saqlanmadi'
   } finally {
     saving.value = false
   }
 }
 
 onMounted(async () => {
+  ensureTeamTab()
   await loadSettings()
   if (!form.autoShiftSlots.length) applyAutoShiftCount()
+  if (canManageTeam.value || canManageTasks.value) await loadStaffData()
+})
+
+watch(visibleTeamTabs, () => {
+  ensureTeamTab()
+}, { immediate: true })
+
+watch([canManageTeam, canManageTasks], ([canManageAllowed, tasksAllowed]) => {
+  if ((canManageAllowed || tasksAllowed) && activeTab.value === 'team' && !staffOperators.value.length) {
+    loadStaffData()
+  }
 })
 </script>
 
@@ -848,13 +1769,10 @@ onMounted(async () => {
   gap: 18px;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
 .tab-strip {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -1128,18 +2046,426 @@ onMounted(async () => {
   background: color-mix(in srgb, var(--success) 8%, var(--surface));
 }
 
+.team-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.team-workspace-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--brand-secondary) 10%, transparent), transparent 46%),
+    color-mix(in srgb, var(--surface-soft) 88%, transparent);
+}
+
+.team-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.team-subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+
+.team-subtab:hover {
+  transform: translateY(-1px);
+  color: var(--text);
+  border-color: var(--stroke);
+}
+
+.team-subtab.active {
+  border-color: color-mix(in srgb, var(--brand-secondary) 30%, var(--stroke));
+  background: color-mix(in srgb, var(--brand-secondary) 12%, var(--surface));
+  color: var(--text);
+}
+
+.team-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.team-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.team-summary-card {
+  display: grid;
+  gap: 8px;
+  min-height: 98px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--brand-secondary) 22%, var(--stroke));
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--brand-secondary) 14%, transparent), transparent 52%),
+    color-mix(in srgb, var(--surface-soft) 94%, transparent);
+}
+
+.team-summary-card span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.team-summary-card strong {
+  color: var(--text);
+  font-size: clamp(22px, 2vw, 30px);
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, .9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.task-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.team-create,
+.payroll-box,
+.task-create,
+.task-list-box {
+  border: 1px solid var(--stroke);
+  background: var(--surface-soft);
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.team-create.is-flat,
+.payroll-box.is-flat {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.team-card-title {
+  margin-bottom: 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.team-hint {
+  margin: -4px 0 14px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.team-submit {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.task-list-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.payroll-filter,
+.payroll-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.payroll-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.payroll-metric {
+  display: grid;
+  gap: 8px;
+  min-height: 94px;
+  padding: 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+
+.payroll-metric span,
+.period-row span,
+.staff-person span,
+.staff-payline span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.payroll-metric strong,
+.period-money,
+.staff-payline strong {
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.period-list,
+.staff-list,
+.task-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.period-row,
+.staff-row,
+.task-row {
+  display: grid;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  background: var(--surface-soft);
+}
+
+.task-row {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--brand-secondary) 8%, transparent), transparent 58%),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.task-row.is-overdue {
+  border-color: color-mix(in srgb, var(--danger) 32%, var(--stroke));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--danger) 12%, transparent), transparent 58%),
+    var(--surface-soft);
+}
+
+.task-row.is-completed {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--stroke));
+}
+
+.task-row.is-cancelled {
+  opacity: .7;
+}
+
+.task-row-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-row-top > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.task-row-top strong {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.task-row-top span,
+.task-description,
+.task-meta {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.task-status {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--brand-secondary) 28%, var(--stroke));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-secondary) 10%, var(--surface-soft));
+  color: var(--text);
+  font-size: 11px !important;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.task-description {
+  margin: 0;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.task-meta span {
+  padding: 7px 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-soft) 80%, transparent);
+}
+
+.period-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.period-row > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.period-actions,
+.staff-actions,
+.task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.staff-row {
+  grid-template-columns: minmax(220px, 1.2fr) minmax(130px, .65fr) minmax(150px, .75fr) minmax(150px, .8fr) minmax(220px, 1fr);
+}
+
+.staff-row.compact {
+  grid-template-columns: minmax(220px, 1.3fr) minmax(130px, .7fr) minmax(150px, .8fr) minmax(220px, 1fr);
+}
+
+.staff-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.staff-person > div:last-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.staff-person strong,
+.staff-person span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-avatar {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--brand-secondary) 28%, var(--stroke));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--brand-secondary) 14%, var(--surface));
+  color: var(--brand-secondary);
+  font-weight: 900;
+}
+
+.staff-inline-field {
+  gap: 6px;
+}
+
+.staff-payline {
+  display: grid;
+  gap: 4px;
+}
+
+.team-empty {
+  display: grid;
+  min-height: 130px;
+  place-items: center;
+  border: 1px dashed var(--stroke);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.compact-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
 @media (max-width: 1180px) {
-  .stats-grid,
-  .content-grid {
+  .content-grid,
+  .team-grid,
+  .task-layout,
+  .team-summary,
+  .staff-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .payroll-filter,
+  .payroll-action-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 860px) {
-  .stats-grid,
+  .team-workspace-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .team-subtabs,
+  .team-toolbar,
+  .team-toolbar .ghost-btn {
+    width: 100%;
+  }
+
+  .team-subtab {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
   .content-grid,
   .form-grid,
-  .logo-layout {
+  .logo-layout,
+  .team-grid,
+  .task-layout,
+  .team-summary,
+  .payroll-filter,
+  .payroll-action-grid,
+  .payroll-metrics,
+  .period-row,
+  .staff-row {
     grid-template-columns: 1fr;
   }
 

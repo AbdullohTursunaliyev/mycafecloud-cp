@@ -174,6 +174,28 @@ export const cpApi = {
     nexoraSpeak(payload = {}) {
         return http.post('/nexora-assistant/speak', payload, {
             responseType: 'blob',
+            timeout: 60000,
+        })
+    },
+    nexoraTranscribe(formData) {
+        return http.post('/nexora-assistant/transcribe', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 60000,
+        })
+    },
+    nexoraAudit(params = {}) {
+        return http.get('/nexora-assistant/audit', { params })
+    },
+    nexoraReportCenter(params = {}) {
+        return http.get('/nexora-assistant/report-center', { params })
+    },
+    nexoraNotifications(params = {}) {
+        return http.get('/nexora-assistant/notifications', { params })
+    },
+    nexoraDownloadReport(filename) {
+        return http.get(`/nexora-assistant/reports/${encodeURIComponent(filename)}`, {
+            responseType: 'blob',
+            timeout: 120000,
         })
     },
     clubVisualGenerateDraft(payload) {
@@ -362,6 +384,72 @@ export const cpApi = {
     },
     settingsUpdate(payload) {
         return http.post('/settings', payload)
+    },
+    operators() {
+        return http.get('/operators')
+    },
+    operatorCreate(payload) {
+        return http.post('/operators', payload)
+    },
+    operatorUpdate(id, payload) {
+        return http.patch(`/operators/${id}`, payload)
+    },
+    operatorTasks(params = {}) {
+        return http.get('/operator-tasks', { params })
+    },
+    operatorTaskCreate(payload) {
+        return http.post('/operator-tasks', payload)
+    },
+    operatorTaskUpdate(id, payload) {
+        return http.patch(`/operator-tasks/${id}`, payload)
+    },
+    operatorTaskComplete(id, payload = {}) {
+        return http.post(`/operator-tasks/${id}/complete`, payload)
+    },
+    operatorTaskCancel(id) {
+        return http.post(`/operator-tasks/${id}/cancel`)
+    },
+    operatorPayroll(params = {}) {
+        return http.get('/operators/payroll', { params })
+    },
+    operatorProfile(id, params = {}) {
+        return http.get(`/operators/${id}/profile`, { params })
+    },
+    operatorAttendance(params = {}) {
+        return http.get('/operator-attendance', { params })
+    },
+    operatorAttendanceSave(payload) {
+        return http.post('/operator-attendance', payload)
+    },
+    payrollAdjustments(params = {}) {
+        return http.get('/payroll/adjustments', { params })
+    },
+    payrollAdjustmentCreate(payload) {
+        return http.post('/payroll/adjustments', payload)
+    },
+    payrollPeriods(params = {}) {
+        return http.get('/payroll/periods', { params })
+    },
+    payrollPeriodCreate(payload) {
+        return http.post('/payroll/periods', payload)
+    },
+    payrollPeriodApprove(id) {
+        return http.post(`/payroll/periods/${id}/approve`)
+    },
+    payrollPeriodMarkPaid(id) {
+        return http.post(`/payroll/periods/${id}/mark-paid`)
+    },
+    payrollExportXlsx(params = {}) {
+        return http.get('/payroll/export-xlsx', {
+            params,
+            responseType: 'blob',
+        })
+    },
+    payrollExportPdf(params = {}) {
+        return http.get('/payroll/export-pdf', {
+            params,
+            responseType: 'blob',
+        })
     },
     promoVideoUpload(formData) {
         return http.post('/settings/promo-video', formData, {
