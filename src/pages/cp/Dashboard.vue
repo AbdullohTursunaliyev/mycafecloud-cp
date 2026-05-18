@@ -295,9 +295,14 @@ const shiftExpected = computed(() => shiftSummary.value?.expected || {})
 const shiftOpen = computed(() => !!shift.value)
 const shiftId = computed(() => shift.value?.id || '-')
 const shiftOpenedAt = computed(() => shift.value?.opened_at || null)
-const shiftCash = computed(() => Number(shiftTotals.value?.cash || 0))
-const shiftCard = computed(() => Number(shiftTotals.value?.card || 0))
-const shiftGross = computed(() => Number(shiftTotals.value?.gross || 0))
+const shiftCashGross = computed(() => Number(shiftTotals.value?.cash || shiftTotals.value?.cash_total || 0))
+const shiftCardGross = computed(() => Number(shiftTotals.value?.card || shiftTotals.value?.card_total || 0))
+const shiftReturnsCash = computed(() => Number(shiftTotals.value?.returns_cash_total || shiftTotals.value?.returns_cash || 0))
+const shiftReturnsCard = computed(() => Number(shiftTotals.value?.returns_card_total || shiftTotals.value?.returns_card || 0))
+const shiftReturnsTotal = computed(() => Number(shiftTotals.value?.returns_total || shiftTotals.value?.returns || shiftTotals.value?.refund_total || 0))
+const shiftCash = computed(() => Number(shiftTotals.value?.cash_net ?? Math.max(0, shiftCashGross.value - shiftReturnsCash.value)))
+const shiftCard = computed(() => Number(shiftTotals.value?.card_net ?? Math.max(0, shiftCardGross.value - shiftReturnsCard.value)))
+const shiftGross = computed(() => Number(shiftTotals.value?.net_revenue ?? shiftTotals.value?.net_total ?? Math.max(0, shiftCashGross.value + shiftCardGross.value - shiftReturnsTotal.value)))
 const shiftBonus = computed(() => Number(shiftTotals.value?.bonus || 0))
 const shiftOps = computed(() => Number(shiftTotals.value?.ops_count || 0))
 const shiftExpenses = computed(() => Number(shiftTotals.value?.expenses || 0))
@@ -800,4 +805,3 @@ onBeforeUnmount(() => {
   }
 }
 </style>
-

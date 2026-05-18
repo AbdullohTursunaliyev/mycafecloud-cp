@@ -1068,6 +1068,9 @@ const normalizeFinance = (raw = {}, fallback = {}) => {
   const returnsCard = Math.abs(toNum(source.returns_card ?? 0))
   const returnsBalance = Math.abs(toNum(source.returns_balance ?? 0))
   const returnsTotal = Math.abs(toNum(source.returns_total ?? (returnsCash + returnsCard)))
+  const cashNet = toNum(source.cash_net ?? Math.max(0, cashIn - returnsCash))
+  const cardNet = toNum(source.card_net ?? Math.max(0, cardIn - returnsCard))
+  const netRevenue = toNum(source.net_revenue ?? source.net_in ?? Math.max(0, grossIn - returnsTotal))
   const expensesCash = Math.abs(toNum(source.expenses_cash ?? row.expenses_cash_total))
   const adjustmentsTotal = toNum(source.adjustments_total ?? row.adjustments_total)
   const expectedCash = toNum(source.expected_cash ?? (openingCash + cashIn - returnsCash - expensesCash))
@@ -1081,6 +1084,9 @@ const normalizeFinance = (raw = {}, fallback = {}) => {
     cash_in: cashIn,
     card_in: cardIn,
     gross_in: grossIn,
+    cash_net: cashNet,
+    card_net: cardNet,
+    net_revenue: netRevenue,
     returns_cash: returnsCash,
     returns_card: returnsCard,
     returns_balance: returnsBalance,
@@ -1107,9 +1113,9 @@ const normalizeFinance = (raw = {}, fallback = {}) => {
 const financeOf = (row) => normalizeFinance(row?.finance || {}, row)
 
 const openingCash = (row) => financeOf(row).opening_cash
-const cashIn = (row) => financeOf(row).cash_in
-const cardIn = (row) => financeOf(row).card_in
-const grossIn = (row) => financeOf(row).gross_in
+const cashIn = (row) => financeOf(row).cash_net
+const cardIn = (row) => financeOf(row).card_net
+const grossIn = (row) => financeOf(row).net_revenue
 const returnsTotal = (row) => financeOf(row).returns_total
 const expensesCash = (row) => financeOf(row).expenses_cash
 const expectedCash = (row) => financeOf(row).expected_cash
@@ -1354,8 +1360,8 @@ const downloadExport = async () => {
 
 const applySummary = (raw = {}) => {
   summary.shiftsCount = toNum(raw.shifts_count)
-  summary.cashIn = toNum(raw.cash_in)
-  summary.cardIn = toNum(raw.card_in)
+  summary.cashIn = toNum(raw.cash_net ?? raw.cash_in)
+  summary.cardIn = toNum(raw.card_net ?? raw.card_in)
   summary.cashOut = toNum(raw.cash_out)
   summary.netCash = toNum(raw.net_cash)
   summary.closingSum = toNum(raw.closing_sum)
@@ -2401,4 +2407,3 @@ tbody tr:hover {
   }
 }
 </style>
-
